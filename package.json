@@ -1,8 +1,8 @@
 {
   "name": "aidc-generator",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
-  "description": "Fast English-language QR and barcode generator with 110 AIDC symbologies, a dark yellow theme, and live SVG previews.",
+  "description": "Fast English-language QR and barcode generator with 110 AIDC symbologies, a dark yellow theme, and live PNG previews with independent foreground/background transparency.",
   "type": "module",
   "scripts": {
     "dev": "node scripts/serve.mjs",

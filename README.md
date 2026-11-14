@@ -71,3 +71,13 @@ tests/payloads.test.mjs    automated tests
 ```
 
 Libraries: [bwip-js 4.11.4](https://github.com/metafloor/bwip-js) (barcode encoders), [qr-code-styling 1.9.2](https://github.com/kozakdenys/qr-code-styling) (custom QR), [JSZip 3.10.1](https://stuk.github.io/jszip/), and [Lucide](https://lucide.dev/) icons. Each external dependency has its own license. This project is MIT licensed.
+
+
+## v1.2 — Full-size PNG live preview and opacity controls
+
+- Every supported format is previewed as a **PNG raster**, scaled to the available preview frame without stretching its geometry.
+- The export pipeline remains SVG-first for crisp final SVG, PNG, JPEG and WEBP downloads.
+- Independent **foreground opacity** and **background opacity** sliders (0–100%). PNG, WEBP and SVG retain transparency. JPEG is composited on white because it does not support an alpha channel.
+- The preview uses a checkerboard backdrop to make transparent areas recognizable.
+- Preview is rerasterized on resize without re-encoding the barcode.
+- Extremely wide barcodes may appear shorter than the preview frame to avoid distorting widths or scanner readability.

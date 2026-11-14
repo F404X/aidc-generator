@@ -1,6 +1,6 @@
 /** Client-only barcode renderers. Encoder libraries are fetched, barcode payloads are not. */
-import { ensureEngine } from './engines.mjs';
-import { prepareBarcodePayload } from './validation.mjs';
+import { ensureEngine } from './engines.mjs?v=1.2.0';
+import { prepareBarcodePayload } from './validation.mjs?v=1.2.0';
 
 const SVG_MIME = 'image/svg+xml;charset=utf-8';
 function drawBwip(format, text, settings, preview) {
@@ -16,7 +16,6 @@ function drawBwip(format, text, settings, preview) {
     textcolor: settings.foreground.slice(1),
     textsize: 11,
     barcolor: settings.foreground.slice(1),
-    backgroundcolor: settings.background.slice(1),
     paddingwidth: margin,
     paddingheight: margin,
   });
@@ -26,7 +25,7 @@ export async function renderCode(format, payload, settings, { preview = false } 
   const text = prepareBarcodePayload(format, payload);
   if (format.id !== 'qrcode') {
     await ensureEngine('bwip');
-    try { return sanitizeSvg(drawBwip(format, text, settings, preview)); }
+    try { return applyBarcodeOpacity(sanitizeSvg(drawBwip(format, text, settings, preview)), settings); }
     catch (error) {
       const details = String(error?.message || error).replace(/^bwipp\./, '');
       throw new Error(`${format.name}: ${details}`);
@@ -41,14 +40,13 @@ export async function renderCode(format, payload, settings, { preview = false } 
     if (settings.logo) throw error;
     await ensureEngine('bwip');
     try {
-      return sanitizeSvg(window.bwipjs.toSVG({
+      return applyBarcodeOpacity(sanitizeSvg(window.bwipjs.toSVG({
         bcid: 'qrcode', text,
         scale: preview ? 3 : Math.max(3, Math.round(settings.size / 100)),
         eclevel: settings.correction,
         barcolor: settings.foreground.slice(1),
-        backgroundcolor: settings.background.slice(1),
         padding: Math.max(4, settings.margin),
-      }));
+      })), settings);
     } catch { throw error; }
   }
 }
@@ -66,10 +64,10 @@ async function styledQr(data, settings, preview) {
       margin: Math.max(2, Math.round(size * 0.008)),
       saveAsBlob: true,
     },
-    dotsOptions: { type: settings.dotStyle, color: settings.foreground },
-    cornersSquareOptions: { type: settings.cornerStyle, color: settings.foreground },
-    cornersDotOptions: { type: settings.cornerStyle === 'square' ? 'square' : 'dot', color: settings.foreground },
-    backgroundOptions: { color: settings.background },
+    dotsOptions: { type: settings.dotStyle, color: rgbaColor(settings.foreground, settings.foregroundOpacity) },
+    cornersSquareOptions: { type: settings.cornerStyle, color: rgbaColor(settings.foreground, settings.foregroundOpacity) },
+    cornersDotOptions: { type: settings.cornerStyle === 'square' ? 'square' : 'dot', color: rgbaColor(settings.foreground, settings.foregroundOpacity) },
+    backgroundOptions: { color: rgbaColor(settings.background, settings.backgroundOpacity) },
   });
   try {
     const blob = await qr.getRawData('svg');
@@ -79,6 +77,33 @@ async function styledQr(data, settings, preview) {
   } catch (error) {
     throw new Error(`Could not generate QR Code: ${error?.message || 'content may be too large.'}`);
   }
+}
+
+/** A CSS color with independent alpha (0–100%), supported by styled QR SVGs. */
+export function rgbaColor(hex, percent = 100) {
+  const channels = [1, 3, 5].map(start => Number.parseInt(hex.slice(start, start + 2), 16));
+  const alpha = Math.max(0, Math.min(100, Number(percent))) / 100;
+  return `rgba(${channels.join(', ')}, ${alpha})`;
+}
+
+/** BWIP outputs opaque vector shapes; wrap them in a group and add a separate
+ *  background layer so either opacity can be changed without affecting the other. */
+export function applyBarcodeOpacity(svg, settings) {
+  const doc = new DOMParser().parseFromString(svg, 'image/svg+xml');
+  const root = doc.documentElement;
+  if (doc.querySelector('parsererror') || root.localName !== 'svg') throw new Error('Invalid barcode SVG.');
+  const ns = 'http://www.w3.org/2000/svg';
+  const drawing = doc.createElementNS(ns, 'g');
+  drawing.setAttribute('opacity', String(Math.max(0, Math.min(100, settings.foregroundOpacity ?? 100)) / 100));
+  // Ensure no default opaque background from BWIP hides the alpha layer.
+  for (const child of Array.from(root.childNodes)) drawing.appendChild(child);
+  const bg = doc.createElementNS(ns, 'rect');
+  bg.setAttribute('width', '100%');
+  bg.setAttribute('height', '100%');
+  bg.setAttribute('fill', settings.background);
+  bg.setAttribute('fill-opacity', String(Math.max(0, Math.min(100, settings.backgroundOpacity ?? 100)) / 100));
+  root.append(bg, drawing);
+  return new XMLSerializer().serializeToString(doc);
 }
 
 /** Whitelist SVG elements and attributes to keep generated previews non-executable. */
@@ -118,8 +143,11 @@ export async function svgToRaster(svg, mime = 'image/png', targetSize = 512, bac
   canvas.width = width; canvas.height = height;
   const context = canvas.getContext('2d');
   if (!context) throw new Error('Canvas 2D is unavailable in this browser.');
-  context.fillStyle = background;
-  context.fillRect(0, 0, width, height);
+  // PNG and WEBP retain their alpha channel. JPG cannot; composite on white.
+  if (mime === 'image/jpeg') {
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, width, height);
+  }
   const url = URL.createObjectURL(svgBlob(svg));
   try {
     const image = new Image();

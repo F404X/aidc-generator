@@ -1,11 +1,11 @@
-import { CATEGORIES, FORMATS, QUICK_IDS, SIDEBAR_IDS, lookupFormat, searchFormats } from './catalog.mjs';
-import { TEMPLATES, buildTemplate } from './payloads.mjs';
-import { renderCode, svgBlob, svgToRaster } from './renderer.mjs';
-import { ensureEngine, warmupEngines } from './engines.mjs';
-import { normalizeHex, contrastRatio, safeFilename, triggerDownload, nextFrame, debounce } from './utils.mjs';
+import { CATEGORIES, FORMATS, QUICK_IDS, SIDEBAR_IDS, lookupFormat, searchFormats } from './catalog.mjs?v=1.2.0';
+import { TEMPLATES, buildTemplate } from './payloads.mjs?v=1.2.0';
+import { renderCode, svgBlob, svgToRaster } from './renderer.mjs?v=1.2.0';
+import { ensureEngine, warmupEngines } from './engines.mjs?v=1.2.0';
+import { normalizeHex, contrastRatio, safeFilename, triggerDownload, nextFrame, debounce } from './utils.mjs?v=1.2.0';
 
 const $ = id => document.getElementById(id);
-const DEFAULTS = Object.freeze({foreground:'#19170E', background:'#FFFFFF', size:512, margin:16, dotStyle:'square', cornerStyle:'square', correction:'H', barHeight:18, showText:true, logo:null, logoSize:22});
+const DEFAULTS = Object.freeze({foreground:'#19170E', background:'#FFFFFF', foregroundOpacity:100, backgroundOpacity:100, size:512, margin:16, dotStyle:'square', cornerStyle:'square', correction:'H', barHeight:18, showText:true, logo:null, logoSize:22});
 const state = {
   format: lookupFormat('qrcode'), template:'text', settings:{...DEFAULTS},
   values: {qrcode:''}, fields: {
@@ -14,7 +14,7 @@ const state = {
     email:{to:'',subject:'',body:''},
     pix:{key:'', name:'', city:'', amount:'', description:''},
   },
-  svg:null, exportSvg:null, lastPayload:'', lastRevision:-1, exportRevision:-1, revision:0, previewUrl:null,
+  svg:null, exportSvg:null, lastPayload:'', lastRevision:-1, exportRevision:-1, revision:0, previewUrl:null, previewToken:0,
   catalogCategory:'all', batchRunning:false, lastFocused:null,
 };
 
@@ -51,8 +51,11 @@ function refreshCount() {
 function syncContrast() {
   const ratio = contrastRatio(state.settings.foreground, state.settings.background);
   const note = $('downloadNote'), badge = $('readyBadge');
-  if (ratio < 3) {
-    note.textContent = 'Low color contrast can make codes unreadable. Choose darker foreground and a light background.';
+  const transparent = state.settings.foregroundOpacity < 100 || state.settings.backgroundOpacity < 100;
+  if (ratio < 3 || transparent) {
+    note.textContent = transparent
+      ? 'Transparency may reduce scanner readability. Test the result against its final background.'
+      : 'Low color contrast can make codes unreadable. Choose darker foreground and a light background.';
     note.classList.add('warning-text');
     if (state.svg) {badge.classList.add('warning'); badge.textContent = 'Low contrast';}
   } else {
@@ -69,7 +72,9 @@ function clearPreview() {
   $('previewEmpty').hidden = false;
   $('readyBadge').textContent = 'Awaiting input';
   $('readyBadge').classList.remove('warning');
+  ++state.previewToken;
   if (state.previewUrl) {URL.revokeObjectURL(state.previewUrl); state.previewUrl = null;}
+  $('previewImage').removeAttribute('src');
   state.svg = null;
 }
 function setBusy() {
@@ -90,23 +95,29 @@ function setError(message) {
   $('readyBadge').classList.add('warning');
 }
 
-async function renderNow() {
-  const revision = state.revision, format = state.format, settings = snapshotSettings();
-  if (!hasInput()) { clearPreview(); return null; }
-  let payload;
-  setBusy();
+/** Fit the raster to the usable preview area, including HiDPI screens. */
+function previewRasterSize() {
+  const area = $('previewArtboard');
+  const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+  return Math.min(2048, Math.max(320, Math.ceil(Math.max(area.clientWidth, area.clientHeight) * dpr)));
+}
+
+/** Paint a PNG preview without recalculating the barcode on container resize. */
+async function paintPreview(svg, revision) {
+  const token = ++state.previewToken;
+  const png = await svgToRaster(svg, 'image/png', previewRasterSize());
+  if (revision !== state.revision || token !== state.previewToken) return false;
+  const url = URL.createObjectURL(png);
   try {
-    payload = currentPayload();
-    const svg = await renderCode(format,payload,settings,{preview:true});
-    if (revision !== state.revision) return null;
-    state.svg = svg;
-    state.lastRevision = revision;
-    state.lastPayload = payload;
-    const url = URL.createObjectURL(svgBlob(svg));
-    const oldUrl = state.previewUrl;
+    // Decode before replacing the visible image to avoid a blank/stale preview.
+    const decoded = new Image();
+    decoded.src = url;
+    await decoded.decode();
+    if (revision !== state.revision || token !== state.previewToken) return false;
     const image = $('previewImage');
-    image.onload = () => { if (oldUrl) URL.revokeObjectURL(oldUrl); };
-    image.onerror = () => { if (revision === state.revision) setError('Could not display this SVG preview.'); if (oldUrl) URL.revokeObjectURL(oldUrl); };
+    $('previewArtboard').classList.toggle('is-transparent',
+      state.settings.foregroundOpacity < 100 || state.settings.backgroundOpacity < 100);
+    const previousUrl = state.previewUrl;
     state.previewUrl = url;
     image.src = url;
     image.hidden = false;
@@ -114,6 +125,25 @@ async function renderNow() {
     $('previewLoading').hidden = true;
     $('previewError').hidden = true;
     $('previewEmpty').hidden = true;
+    if (previousUrl) URL.revokeObjectURL(previousUrl);
+    return true;
+  } finally {
+    if (state.previewUrl !== url) URL.revokeObjectURL(url);
+  }
+}
+
+async function renderNow() {
+  const revision = state.revision, format = state.format, settings = snapshotSettings();
+  if (!hasInput()) { clearPreview(); return null; }
+  setBusy();
+  try {
+    const payload = currentPayload();
+    const svg = await renderCode(format, payload, settings, {preview: true});
+    if (revision !== state.revision) return null;
+    if (!await paintPreview(svg, revision)) return null;
+    state.svg = svg;
+    state.lastRevision = revision;
+    state.lastPayload = payload;
     syncContrast();
     return svg;
   } catch (error) {
@@ -257,9 +287,17 @@ function setColor(which,value) {
   syncColor(which);
   changed();
 }
+function syncOpacity(which) {
+  const value = state.settings[`${which}Opacity`];
+  $(`${which}Opacity`).value = String(value);
+  $(`${which}OpacityOutput`).textContent = `${value}%`;
+}
 function resetAll() {
   state.settings={...DEFAULTS}; state.template='text';
-  for(const prop of ['foreground','background']) syncColor(prop);
+  for(const prop of ['foreground','background']) {
+    syncColor(prop);
+    syncOpacity(prop);
+  }
   $('sizeSelect').value = String(DEFAULTS.size);
   $('marginInput').value = String(DEFAULTS.margin);
   $('dotStyle').value = DEFAULTS.dotStyle;
@@ -413,8 +451,18 @@ function attachEvents() {
     $(`${prop}Color`).addEventListener('input',e=>setColor(prop,e.target.value));
     $(`${prop}Hex`).addEventListener('change',e=>setColor(prop,e.target.value));
     $(`${prop}Hex`).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();e.target.blur();}});
+    $(`${prop}Opacity`).addEventListener('input',e=>{
+      state.settings[`${prop}Opacity`] = Number(e.target.value);
+      syncOpacity(prop);
+      changed();
+    });
   }
-  $('swapColors').addEventListener('click',()=>{const {foreground,background}=state.settings;state.settings.foreground=background;state.settings.background=foreground;syncColor('foreground');syncColor('background');changed();});
+  $('swapColors').addEventListener('click',()=>{
+    const {foreground,background,foregroundOpacity,backgroundOpacity}=state.settings;
+    Object.assign(state.settings,{foreground:background,background:foreground,foregroundOpacity:backgroundOpacity,backgroundOpacity:foregroundOpacity});
+    for (const side of ['foreground','background']) {syncColor(side);syncOpacity(side);}
+    changed();
+  });
   for(const [id,key,parse] of [['sizeSelect','size',Number],['marginInput','margin',Number],['dotStyle','dotStyle',String],['cornerStyle','cornerStyle',String],['errorCorrection','correction',String]])
     $(id).addEventListener('change',e=>{state.settings[key]=parse(e.target.value);changed();});
   $('humanReadable').addEventListener('change',e=>{state.settings.showText=e.target.checked;changed();});
@@ -464,6 +512,15 @@ function init() {
   $('totalFormatCount').textContent = `${FORMATS.length}+`;
   $('formatCountLabel').textContent=String(FORMATS.length);
   attachEvents();
+  for (const side of ['foreground','background']) syncOpacity(side);
+  if ('ResizeObserver' in window) {
+    const onResize = debounce(() => {
+      if (state.svg && state.lastRevision === state.revision) {
+        void paintPreview(state.svg, state.revision).catch(error => setError(error.message));
+      }
+    }, 90);
+    new ResizeObserver(onResize).observe($('previewArtboard'));
+  }
   selectFormat('qrcode');
   icons();
   if ('requestIdleCallback' in window) requestIdleCallback(warmupEngines, {timeout: 1800});
