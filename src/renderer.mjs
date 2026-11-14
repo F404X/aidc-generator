@@ -44,16 +44,15 @@ export async function renderCode(format, payload, settings, { preview = false } 
     await ensureEngine('qr');
     return appendQrCaption(overlayQrLogo(await styledQr(text,settings,preview),settings),settings.captionItems);
   } catch (error) {
-    if (settings.logo) throw error;
     await ensureEngine('bwip');
     try {
-      return appendQrCaption(applyBarcodeOpacity(sanitizeSvg(window.bwipjs.toSVG({
+      return appendQrCaption(overlayQrLogo(applyBarcodeOpacity(sanitizeSvg(window.bwipjs.toSVG({
         bcid: 'qrcode', text,
         scale: preview ? 3 : Math.max(3, Math.round(settings.size / 100)),
         eclevel: settings.correction,
         barcolor: settings.foreground.slice(1),
         padding: Math.max(4, settings.margin),
-      })), settings), settings.captionItems);
+      })), settings), settings), settings.captionItems);
     } catch { throw error; }
   }
 }

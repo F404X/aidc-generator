@@ -14,7 +14,10 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-audit --no-fund
-      - run: npm test && npm run check
+      - name: Check JavaScript syntax
+        run: npm run check
+      - name: Run unit tests
+        run: npm test
       - name: Test all 110 formats with real bwip-js
         run: npm run audit:engine
       - uses: actions/upload-artifact@v4
