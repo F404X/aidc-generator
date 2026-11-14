@@ -16,8 +16,12 @@ jobs:
       - run: npm install --no-audit --no-fund
       - name: Check JavaScript syntax
         run: npm run check
-      - name: Run unit tests
-        run: npm test
+      - name: Test QR color and opacity
+        run: node --test tests/opacity.test.mjs
+      - name: Test payloads and validation
+        run: node --test tests/payloads.test.mjs
+      - name: Test rMQR and catalog
+        run: node --test tests/symbology-options.test.mjs
       - name: Test all 110 formats with real bwip-js
         run: npm run audit:engine
       - uses: actions/upload-artifact@v4
