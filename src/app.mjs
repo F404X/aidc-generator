@@ -45,10 +45,6 @@ function snapshotSettings() {
   }
   return settings;
 }
-function updateCheckerboard() {
-  const opacity=Math.max(0,Math.min(100,Number(state.settings.backgroundOpacity??100)))/100;
-  $('previewStage').style.setProperty('--checker-strength',String((.12+(1-opacity)*.88).toFixed(3)));
-}
 function currentPayload() {
   return state.format.id === 'qrcode' && state.template !== 'text'
     ? buildTemplate(state.template,state.fields[state.template])
@@ -131,7 +127,6 @@ async function paintPreview(svg, revision) {
     await decoded.decode();
     if (revision !== state.revision || token !== state.previewToken) return false;
     const image = $('previewImage');
-    updateCheckerboard();
     const previousUrl = state.previewUrl;
     state.previewUrl = url;
     image.src = url;
@@ -177,7 +172,6 @@ function changed() {
   state.exportSvg = null;
   state.exportRevision = -1;
   refreshCount();
-  updateCheckerboard();
   scheduleRender.cancel();
   if (!hasInput()) { clearPreview(); return; }
   scheduleRender();
@@ -574,7 +568,6 @@ function init() {
   attachEvents();
   for (const side of ['foreground','background']) syncOpacity(side);
   $('payloadInput').value=state.values.qrcode;
-  updateCheckerboard();
   if ('ResizeObserver' in window) {
     const onResize = debounce(() => {
       if (state.svg && state.lastRevision === state.revision) {

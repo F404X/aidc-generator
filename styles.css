@@ -467,7 +467,7 @@ input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;height:17
 @media(max-width:540px){.quick-copy{text-align:center;align-items:center;width:100%}.quick-copy .thumb-sample{max-width:100%}}
 
 /* A404DC v1.5: reliable, non-stretched preview over variable-strength checkerboard. */
-#previewStage{background:repeating-linear-gradient(135deg,#FFFFFF 0 30px,rgba(245,245,245,var(--checker-strength,.12)) 30px 60px),#FFFFFF!important}
+#previewStage{background:repeating-linear-gradient(135deg,#FFFFFF 0 30px,#E6E6E6 30px 60px)!important}
 #previewArtboard,#previewArtboard.is-transparent,#previewArtboard:has(img[hidden]){background:transparent!important;box-shadow:none!important}
 #previewImage{display:block!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;aspect-ratio:auto!important}
 #previewImage[hidden]{display:none!important}
