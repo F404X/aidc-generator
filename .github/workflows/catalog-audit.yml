@@ -1,0 +1,25 @@
+name: Audit A404DC encoders
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  symbology-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm test && npm run check
+      - name: Test all 110 formats with real bwip-js
+        run: npm run audit:engine
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: symbology-audit-report
+          path: catalog-audit-report.json
+          if-no-files-found: ignore
