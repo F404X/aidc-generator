@@ -1,14 +1,14 @@
 {
   "name": "aidc-generator",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "private": true,
-  "description": "A404DC with format-aware Variation and Auto Select for QR, rMQR and specialized symbologies",
+  "description": "A404DC Variation checkbox with actual auto-selected version and responsive code input",
   "type": "module",
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "start": "node scripts/serve.mjs",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check src/app.mjs && node --check src/renderer.mjs && node --check src/catalog.mjs && node --check src/payloads.mjs && node --check src/utils.mjs && node --check src/engines.mjs && node --check src/validation.mjs && node --check src/symbology-options.mjs && node --check src/qr-extensions.mjs && node --check src/thumbnails.mjs && node --check src/variations.mjs",
+    "check": "node --check src/app.mjs && node --check src/renderer.mjs && node --check src/catalog.mjs && node --check src/payloads.mjs && node --check src/utils.mjs && node --check src/engines.mjs && node --check src/validation.mjs && node --check src/symbology-options.mjs && node --check src/qr-extensions.mjs && node --check src/thumbnails.mjs && node --check src/variations.mjs && node --check src/auto-variation.mjs",
     "audit:engine": "node scripts/audit-engine.mjs"
   },
   "engines": {

@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=1.6.0">
+  <link rel="stylesheet" href="./styles.css?v=1.6.1">
   <script defer src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
-  <script type="module" src="./src/app.mjs?v=1.6.0"></script>
+  <script type="module" src="./src/app.mjs?v=1.6.1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -42,6 +42,22 @@
             <div class="panel-top"><div><div class="panel-eyebrow">SETTINGS</div><h3>Customize your code</h3></div><button class="icon-btn subtle" type="button" id="resetButton" aria-label="Reset settings" title="Reset settings"><i data-lucide="rotate-ccw"></i></button></div>
             <div class="field-set"><div class="field-heading"><label class="field-label">Symbology</label><span class="field-subtle">Choose a format</span></div><div class="quick-types" id="quickTypes"></div><button class="catalog-trigger" id="openCatalog" type="button"><span><i data-lucide="grid-2x2"></i><span id="formatTriggerLabel">Browse all formats</span></span><span><strong id="formatCountLabel">100+</strong><i data-lucide="chevron-right"></i></span></button></div>
 
+            <div class="field-set variation-field" id="variationRow" hidden>
+  <div class="field-heading variation-heading">
+    <label class="field-label" id="variationLabel" for="variationSelect">Variation</label>
+    <span class="field-subtle" id="variationDescription">Symbol version</span>
+  </div>
+  <label class="variation-auto-line" for="variationAuto">
+    <input type="checkbox" id="variationAuto" checked>
+    <span>Auto Select</span>
+  </label>
+  <div class="select-wrap variation-select-wrap">
+    <select id="variationSelect" aria-label="Variation" disabled><option value="" selected>Detecting variation…</option></select>
+    <i data-lucide="chevron-down"></i>
+  </div>
+  <p id="variationHint" class="variation-hint"></p>
+</div>
+
             <div class="field-set input-set"><div class="field-heading"><label class="field-label" for="payloadInput">Code content</label><span class="char-count" id="charCount">0 characters</span></div><div class="template-row" id="templateRow" aria-label="QR data templates"><button type="button" class="template-chip selected" data-template="text">Text / URL</button><button type="button" class="template-chip" data-template="wifi">Wi-Fi</button><button type="button" class="template-chip" data-template="contact">Contact</button><button type="button" class="template-chip" data-template="email">Email</button><button type="button" class="template-chip" data-template="pix">PIX</button></div>
               <div id="customFields" hidden></div>
               <textarea id="payloadInput" spellcheck="false" rows="3" placeholder="Enter text or a URL to encode"></textarea>
@@ -53,12 +69,7 @@
 
             <div class="two-fields"><div class="field-set"><div class="field-heading"><label class="field-label" for="sizeSelect">Export resolution</label></div><div class="select-wrap"><select id="sizeSelect"><option value="256">256 px</option><option value="512" selected>512 px</option><option value="1024">1024 px</option><option value="1600">1600 px</option></select><i data-lucide="chevron-down"></i></div></div><div class="field-set"><div class="field-heading"><label class="field-label" for="marginInput">Quiet zone / margin</label></div><div class="select-wrap"><select id="marginInput"><option value="0">No margin</option><option value="8">8 px — narrow</option><option value="16" selected>16 px — standard</option><option value="24">24 px — wide</option><option value="32">32 px — extra</option></select><i data-lucide="chevron-down"></i></div></div></div>
 
-            <div class="field-set variation-field" id="variationRow" hidden>
-  <div class="field-heading"><label class="field-label" id="variationLabel" for="variationSelect">Variation</label><span class="field-subtle" id="variationDescription">Symbol version</span></div>
-  <div class="select-wrap"><select id="variationSelect" aria-label="Variation"><option value="auto">Auto Select</option></select><i data-lucide="chevron-down"></i></div>
-  <p id="variationHint" class="variation-hint"></p>
-</div>
-<div class="qr-settings" id="qrSettings"><div class="field-set"><div class="field-heading"><label class="field-label" for="dotStyle">QR module shape</label></div><div class="select-wrap"><select id="dotStyle"><option value="square" selected>Square · classic</option><option value="rounded">Rounded · modern</option><option value="dots">Dots · minimal</option><option value="classy">Classy</option><option value="classy-rounded">Classy rounded</option><option value="extra-rounded">Extra rounded</option></select><i data-lucide="chevron-down"></i></div></div><div class="two-fields"><div class="field-set"><div class="field-heading"><label class="field-label" for="cornerStyle">Finder pattern shape</label></div><div class="select-wrap"><select id="cornerStyle"><option value="square" selected>Square</option><option value="extra-rounded">Rounded</option><option value="dot">Dots</option></select><i data-lucide="chevron-down"></i></div></div><div class="field-set"><div class="field-heading"><label class="field-label" for="errorCorrection">Error correction</label></div><div class="select-wrap"><select id="errorCorrection"><option value="L">Low · 7%</option><option value="M">Medium · 15%</option><option value="Q">High · 25%</option><option value="H" selected>Maximum · 30%</option></select><i data-lucide="chevron-down"></i></div></div></div><div class="field-set"><div class="field-heading"><label class="field-label">Center logo <span class="optional-tag">OPTIONAL</span></label></div><div class="upload-area" id="uploadArea"><input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" id="logoUpload" class="sr-only"><div class="upload-inner"><div class="upload-icon"><i data-lucide="image-plus"></i></div><div class="upload-copy"><strong id="uploadTitle">Click or drop your logo</strong><span>PNG, JPG, WEBP, GIF · up to 10 MB</span></div><button type="button" id="chooseLogo" class="upload-button">Choose file</button></div></div><div class="logo-controls" id="logoControls" hidden>
+            <div class="qr-settings" id="qrSettings"><div class="field-set"><div class="field-heading"><label class="field-label" for="dotStyle">QR module shape</label></div><div class="select-wrap"><select id="dotStyle"><option value="square" selected>Square · classic</option><option value="rounded">Rounded · modern</option><option value="dots">Dots · minimal</option><option value="classy">Classy</option><option value="classy-rounded">Classy rounded</option><option value="extra-rounded">Extra rounded</option></select><i data-lucide="chevron-down"></i></div></div><div class="two-fields"><div class="field-set"><div class="field-heading"><label class="field-label" for="cornerStyle">Finder pattern shape</label></div><div class="select-wrap"><select id="cornerStyle"><option value="square" selected>Square</option><option value="extra-rounded">Rounded</option><option value="dot">Dots</option></select><i data-lucide="chevron-down"></i></div></div><div class="field-set"><div class="field-heading"><label class="field-label" for="errorCorrection">Error correction</label></div><div class="select-wrap"><select id="errorCorrection"><option value="L">Low · 7%</option><option value="M">Medium · 15%</option><option value="Q">High · 25%</option><option value="H" selected>Maximum · 30%</option></select><i data-lucide="chevron-down"></i></div></div></div><div class="field-set"><div class="field-heading"><label class="field-label">Center logo <span class="optional-tag">OPTIONAL</span></label></div><div class="upload-area" id="uploadArea"><input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" id="logoUpload" class="sr-only"><div class="upload-inner"><div class="upload-icon"><i data-lucide="image-plus"></i></div><div class="upload-copy"><strong id="uploadTitle">Click or drop your logo</strong><span>PNG, JPG, WEBP, GIF · up to 10 MB</span></div><button type="button" id="chooseLogo" class="upload-button">Choose file</button></div></div><div class="logo-controls" id="logoControls" hidden>
  <details class="logo-editor" id="logoEditor">
   <summary><span>Edit Image</span><i data-lucide="chevron-down"></i></summary>
   <div class="logo-editor-body">

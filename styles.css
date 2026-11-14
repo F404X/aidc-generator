@@ -492,3 +492,12 @@ input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;height:17
 .variation-field[hidden]{display:none!important}
 .variation-hint{margin:7px 0 0;color:var(--muted);font-size:11px;line-height:1.55}
 #variationSelect{width:100%;min-height:42px;cursor:pointer}
+
+/* v1.6.1 — Variation directly below Symbology, separate Auto Select checkbox */
+.variation-field{margin:4px 0 19px;padding:14px;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
+.variation-heading{margin-bottom:12px}
+.variation-auto-line{display:flex;align-items:center;gap:10px;width:max-content;max-width:100%;cursor:pointer;font-size:12px;font-weight:650;color:var(--text);margin:0 0 12px}
+.variation-auto-line input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.variation-select-wrap select:disabled{opacity:.78;cursor:not-allowed;color:var(--muted);background:#242724;border-color:var(--line)}
+.variation-select-wrap:has(select:disabled) svg{opacity:.4}
+.variation-select-wrap:has(select:disabled){opacity:.88}

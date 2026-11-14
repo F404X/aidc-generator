@@ -126,3 +126,9 @@ Supported (24 format IDs across 9 families):
 - **Han Xin Code:** 84 versions.
 
 The menu is hidden for other formats that do not expose a verified discrete size selector. The encoder may refuse a manually selected size when the message does not fit; use Auto Select to recover. In particular Micro QR M1 and Code One S are data-type constrained.
+
+## v1.6.1 — automatic variation feedback and continuous typing
+
+The **Variation** control is now directly below the Symbology selector. **Auto Select** is a separate checkbox (checked by default); it disables manual selection while the adjacent dropdown tracks the version actually generated. QR Code obtains its version from the styled encoder's module count; rMQR reports the exact successful fixed size, and other BWIPP symbologies attempt to match the automatically generated symbol to known fixed-size geometry. If no reliable match is available, the dropdown explicitly says the automatic version was not reported, instead of showing an inaccurate choice. Unchecking Auto Select adopts the last detected size when possible and enables manual control.
+
+The Code content field continues listening to browser `input` events for every repeated keystroke. A trailing debounce with a maximum wait of 170 ms ensures previews refresh during a long held key, without encoding at every individual repeat. Existing image resolution and exports remain unchanged.

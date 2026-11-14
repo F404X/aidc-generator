@@ -33,3 +33,27 @@ export function debounce(fn, ms = 170) {
   wrapped.cancel = () => clearTimeout(timer);
   return wrapped;
 }
+/** Trailing-edge debounce with a guaranteed interval during continuous typing.
+ * Unlike a pure debounce, holding a key does not indefinitely postpone previews.
+ */
+export function debounceWithMaxWait(fn,delay=55,maxWait=170){
+  let timer=null,firstCall=null,args=[];
+  const fire=()=>{
+    if(timer!==null)clearTimeout(timer);
+    timer=null;firstCall=null;
+    return fn(...args);
+  };
+  const scheduled=(...nextArgs)=>{
+    args=nextArgs;
+    const now=performance.now();
+    if(firstCall===null)firstCall=now;
+    if(now-firstCall>=maxWait){void fire();return;}
+    if(timer!==null)clearTimeout(timer);
+    timer=setTimeout(fire,delay);
+  };
+  scheduled.cancel=()=>{
+    if(timer!==null)clearTimeout(timer);
+    timer=null;firstCall=null;
+  };
+  return scheduled;
+}

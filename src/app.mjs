@@ -3,8 +3,9 @@ import { TEMPLATES, buildTemplate } from './payloads.mjs?v=1.4.0';
 import { renderCode, svgBlob, svgToRaster } from './renderer.mjs?v=1.5.0';
 import { ensureEngine, warmupEngines } from './engines.mjs?v=1.4.0';
 import { observeThumbnail, unobserveThumbnails } from './thumbnails.mjs?v=1.4.0';
-import {variationSpec} from './variations.mjs?v=1.6.0';
-import { normalizeHex, contrastRatio, safeFilename, triggerDownload, nextFrame, debounce } from './utils.mjs?v=1.4.0';
+import {variationSpec} from './variations.mjs?v=1.6.1';
+import {extractDetectedVariation} from './auto-variation.mjs?v=1.6.1';
+import { normalizeHex, contrastRatio, safeFilename, triggerDownload, nextFrame, debounce, debounceWithMaxWait } from './utils.mjs?v=1.6.1';
 
 const $ = id => document.getElementById(id);
 const DEFAULTS = Object.freeze({foreground:'#19170E', background:'#FFFFFF', foregroundOpacity:100, backgroundOpacity:100, size:512, margin:16, dotStyle:'square', cornerStyle:'square', correction:'H', barHeight:34, showText:true, logo:null, logoSize:20, logoBlackWhite:false, logoThreshold:145, logoMaxDimension:384, logoPadding:3});
@@ -18,7 +19,7 @@ const CAPTION_DEFAULTS={wifi:{},contact:{},email:{},pix:{}};
 
 const state = {
   format: lookupFormat('qrcode'), template:'text', settings:{...DEFAULTS},
-  values: {qrcode:'https://example.com'}, fields:structuredClone(SAMPLE_FIELDS), captions:structuredClone(CAPTION_DEFAULTS), variations:{}, logoSource:null, logoToken:0,
+  values: {qrcode:'https://example.com'}, fields:structuredClone(SAMPLE_FIELDS), captions:structuredClone(CAPTION_DEFAULTS), variations:{}, autoVariations:{}, detectedVariations:{}, variationScanned:{}, logoSource:null, logoToken:0,
   svg:null, exportSvg:null, lastPayload:'', lastRevision:-1, exportRevision:-1, revision:0, previewUrl:null, previewToken:0,
   catalogCategory:'all', batchRunning:false, lastFocused:null,
 };
@@ -38,7 +39,10 @@ function toast(message, type='success') {
   setTimeout(() => { item.classList.add('toast-out'); setTimeout(()=>item.remove(),250); },3500);
 }
 function snapshotSettings() {
-  const settings={...state.settings,variation:state.variations[state.format.id]||'auto'};
+  const spec=variationSpec(state.format.id);
+  const manual=state.variations[state.format.id]||spec?.options[0]?.value;
+  const variation=state.autoVariations[state.format.id]===false?manual:'auto';
+  const settings={...state.settings,variation};
   if(state.format.id==='qrcode' && state.template!=='text'){
     settings.captionItems=TEMPLATES[state.template].fields
       .filter(field=>state.captions[state.template]?.[field.key] && String(state.fields[state.template][field.key]??'').trim())
@@ -152,6 +156,7 @@ async function renderNow() {
     const svg = await renderCode(format, payload, settings, {preview: true});
     if (revision !== state.revision) return null;
     if (!await paintPreview(svg, revision)) return null;
+    recordDetectedVariation(format,svg);
     state.svg = svg;
     state.lastRevision = revision;
     state.lastPayload = payload;
@@ -167,14 +172,17 @@ async function renderNow() {
 }
 // Short trailing-edge debounce: visually updates almost immediately while typing,
 // but expensive QR SVG renders are not launched for every keystroke burst.
-const scheduleRender = debounce(renderNow, 55);
+const scheduleRender = debounceWithMaxWait(renderNow, 55, 170);
 function changed() {
   ++state.revision;
   state.exportSvg = null;
   state.exportRevision = -1;
   refreshCount();
-  scheduleRender.cancel();
-  if (!hasInput()) { clearPreview(); return; }
+  if(state.autoVariations[state.format.id]!==false && variationSpec(state.format.id)){
+    state.variationScanned[state.format.id]=false;
+    updateVariationDisplay(state.format);
+  }
+  if (!hasInput()) {scheduleRender.cancel(); clearPreview(); return;}
   scheduleRender();
 }
 async function ensureResult() {
@@ -184,6 +192,7 @@ async function ensureResult() {
   const payload=currentPayload();
   const svg=await renderCode(state.format,payload,snapshotSettings());
   if (revision !== state.revision) throw new Error('Settings changed. Please try exporting again.');
+  recordDetectedVariation(state.format,svg);
   state.exportSvg = svg;
   state.exportRevision = revision;
   return svg;
@@ -209,23 +218,46 @@ function renderQuickTypes() {
 
   icons();
 }
+/** Display the actual encoder-selected version in the disabled select. */
+function updateVariationDisplay(format){
+  if(!variationSpec(format.id) || state.format.id!==format.id)return;
+  const select=$('variationSelect'),auto=state.autoVariations[format.id]!==false;
+  const detected=state.detectedVariations[format.id];
+  const manual=state.variations[format.id];
+  const candidate=auto?detected:manual;
+  const valid=variationSpec(format.id).options.some(option=>option.value===candidate);
+  select.value=valid?candidate:'';
+  select.disabled=auto;
+  $('variationAuto').checked=auto;
+  const placeholder=select.querySelector('option[value=""]');
+  if(placeholder)placeholder.textContent=auto
+    ?(state.variationScanned[format.id]?'Automatic · version not exposed':'Detecting variation…')
+    :'Choose a variation';
+}
+function recordDetectedVariation(format,svg){
+  if(state.autoVariations[format.id]===false || !variationSpec(format.id))return;
+  const detected=extractDetectedVariation(svg);
+  state.detectedVariations[format.id]=variationSpec(format.id).options.some(option=>option.value===detected)?detected:null;
+  state.variationScanned[format.id]=true;
+  updateVariationDisplay(format);
+}
 function syncVariation(format) {
   const row=$('variationRow'),select=$('variationSelect'),hint=$('variationHint');
   const spec=variationSpec(format.id);
   row.hidden=!spec;
   if(!spec){select.replaceChildren();return;}
-  const auto=el('option','','Auto Select');auto.value='auto';
-  const versions=spec.options.map(item=>{
+  const placeholder=el('option','','Detecting variation…');
+  placeholder.value='';placeholder.disabled=true;
+  const choices=spec.options.map(item=>{
     const option=el('option','',item.label);
     option.value=item.value;
     return option;
   });
-  select.replaceChildren(auto,...versions);
-  const selected=state.variations[format.id]||'auto';
-  select.value=spec.options.some(item=>item.value===selected)?selected:'auto';
+  select.replaceChildren(placeholder,...choices);
   select.setAttribute('aria-label',spec.title);
   $('variationDescription').textContent=spec.title;
   hint.textContent=spec.hint;
+  updateVariationDisplay(format);
 }
 function selectFormat(id) {
   const next = lookupFormat(id);
@@ -321,7 +353,7 @@ function syncOpacity(which) {
   $(`${which}OpacityOutput`).textContent = `${value}%`;
 }
 function resetAll() {
-  state.settings={...DEFAULTS};state.variations={}; state.template='text';state.values={qrcode:'https://example.com'};state.fields=structuredClone(SAMPLE_FIELDS);state.captions=structuredClone(CAPTION_DEFAULTS);state.logoSource=null;state.logoToken++;
+  state.settings={...DEFAULTS};state.variations={};state.autoVariations={};state.detectedVariations={};state.variationScanned={}; state.template='text';state.values={qrcode:'https://example.com'};state.fields=structuredClone(SAMPLE_FIELDS);state.captions=structuredClone(CAPTION_DEFAULTS);state.logoSource=null;state.logoToken++;
   for(const prop of ['foreground','background']) {
     syncColor(prop);
     syncOpacity(prop);
@@ -504,11 +536,30 @@ async function downloadBatch() {
 }
 
 function attachEvents() {
+  $('variationAuto').addEventListener('change',event=>{
+    const format=state.format,spec=variationSpec(format.id);
+    state.autoVariations[format.id]=event.target.checked;
+    if(!event.target.checked && spec){
+      const detected=state.detectedVariations[format.id];
+      const saved=state.variations[format.id];
+      state.variations[format.id]=spec.options.some(item=>item.value===detected)?detected
+        :spec.options.some(item=>item.value===saved)?saved:spec.options[0].value;
+    }
+    updateVariationDisplay(format);
+    changed();
+  });
   $('variationSelect').addEventListener('change',event=>{
+    if(state.autoVariations[state.format.id]!==false || !event.target.value)return;
     state.variations[state.format.id]=event.target.value;
     changed();
   });
-  $('payloadInput').addEventListener('input',()=>{state.values[state.format.id]=$('payloadInput').value;changed();});
+  const payloadChanged=()=>{
+    state.values[state.format.id]=$('payloadInput').value;
+    changed();
+  };
+  // input fires on every key repeat; change additionally handles autofill/commit.
+  $('payloadInput').addEventListener('input',payloadChanged);
+  $('payloadInput').addEventListener('change',payloadChanged);
   for(const btn of document.querySelectorAll('[data-template]')) btn.addEventListener('click',()=>chooseTemplate(btn.dataset.template));
   for(const prop of ['foreground','background']) {
     $(`${prop}Color`).addEventListener('input',e=>setColor(prop,e.target.value));

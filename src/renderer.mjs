@@ -3,7 +3,8 @@ import { ensureEngine } from './engines.mjs?v=1.3.0';
 import { prepareBarcodePayload } from './validation.mjs?v=1.3.0';
 import { encodeRmqr, REQUIRED_OPTIONS } from './symbology-options.mjs?v=1.3.0';
 import {overlayQrLogo,appendQrCaption} from './qr-extensions.mjs?v=1.5.0';
-import {variationOptions,qrVersion} from './variations.mjs?v=1.6.0';
+import {variationOptions,variationSpec,qrVersion} from './variations.mjs?v=1.6.1';
+import {inferBwipVariation,withDetectedVariation} from './auto-variation.mjs?v=1.6.1';
 
 const SVG_MIME = 'image/svg+xml;charset=utf-8';
 function drawBwip(format, text, settings, preview) {
@@ -26,10 +27,22 @@ function drawBwip(format, text, settings, preview) {
   };
   const selected=variationOptions(format.id,settings.variation);
   if(format.id==='rectangularmicroqrcode'){
-    if(selected.version)return window.bwipjs.toSVG({...options,...selected,eclevel:'M'});
-    return encodeRmqr(candidate=>window.bwipjs.toSVG(candidate),options);
+    if(selected.version)return withDetectedVariation(window.bwipjs.toSVG({...options,...selected,eclevel:'M'}),selected.version);
+    let chosen=null;
+    const svg=encodeRmqr(candidate=>{
+      const output=window.bwipjs.toSVG(candidate);
+      chosen=candidate.version;
+      return output;
+    },options);
+    return withDetectedVariation(svg,chosen);
   }
-  return window.bwipjs.toSVG({...options,...selected});
+  const encodedOptions={...options,...selected};
+  const svg=window.bwipjs.toSVG(encodedOptions);
+  const spec=variationSpec(format.id);
+  const chosen=selected[spec?.option]||(preview&&spec
+    ? inferBwipVariation(svg,options,spec,candidate=>window.bwipjs.toSVG(candidate))
+    : null);
+  return withDetectedVariation(svg,chosen);
 }
 
 export async function renderCode(format, payload, settings, { preview = false } = {}) {
@@ -78,7 +91,11 @@ async function styledQr(data, settings, preview) {
     const blob = await Promise.race([qr.getRawData('svg'), new Promise((_,reject)=>setTimeout(()=>reject(new Error('QR generation timed out. Please retry.')),8000))]);
     if (!blob) throw new Error('Could not generate SVG.');
     const svg = await blob.text();
-    return sanitizeSvg(svg);
+    const modules=qr._qr?.getModuleCount?.();
+    const detected=Number.isInteger(modules)&&modules>=21&&((modules-17)%4===0)
+      ? String((modules-17)/4)
+      : (settings.variation!=='auto'?String(settings.variation):null);
+    return withDetectedVariation(sanitizeSvg(svg),detected);
   } catch (error) {
     throw new Error(`Could not generate QR Code: ${error?.message || 'content may be too large.'}`);
   }
