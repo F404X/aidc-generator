@@ -13,7 +13,7 @@ const SAMPLE_FIELDS={
  email:{to:'hello@example.invalid',subject:'Sample message',body:'Hello from A404DC'},
  pix:{key:'sample@example.invalid',name:'SAMPLE MERCHANT',city:'Transilvania',amount:'25.90',description:'Demo payment'},
 };
-const CAPTION_DEFAULTS={wifi:{ssid:true},contact:{name:true,phone:true},email:{to:true,subject:true},pix:{name:true,city:true,amount:true,description:true}};
+const CAPTION_DEFAULTS={wifi:{},contact:{},email:{},pix:{}};
 
 const state = {
   format: lookupFormat('qrcode'), template:'text', settings:{...DEFAULTS},
