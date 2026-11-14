@@ -1,19 +1,20 @@
 import { CATEGORIES, FORMATS, QUICK_IDS, SIDEBAR_IDS, lookupFormat, searchFormats } from './catalog.mjs';
 import { TEMPLATES, buildTemplate } from './payloads.mjs';
 import { renderCode, svgBlob, svgToRaster } from './renderer.mjs';
+import { ensureEngine, warmupEngines } from './engines.mjs';
 import { normalizeHex, contrastRatio, safeFilename, triggerDownload, nextFrame, debounce } from './utils.mjs';
 
 const $ = id => document.getElementById(id);
-const DEFAULTS = Object.freeze({foreground:'#171A21', background:'#FFFFFF', size:512, margin:16, dotStyle:'rounded', cornerStyle:'extra-rounded', correction:'H', barHeight:18, showText:true, logo:null, logoSize:22});
+const DEFAULTS = Object.freeze({foreground:'#19170E', background:'#FFFFFF', size:512, margin:16, dotStyle:'square', cornerStyle:'square', correction:'H', barHeight:18, showText:true, logo:null, logoSize:22});
 const state = {
   format: lookupFormat('qrcode'), template:'text', settings:{...DEFAULTS},
-  values: {qrcode:'https://exemplo.com.br'}, fields: {
-    wifi:{ssid:'Minha rede',password:'12345678',encryption:'WPA',hidden:false},
-    contact:{name:'Maria Silva', phone:'+55 11 99999-9999',email:'maria@exemplo.com',organization:'',website:''},
-    email:{to:'contato@exemplo.com',subject:'Olá',body:''},
+  values: {qrcode:''}, fields: {
+    wifi:{ssid:'',password:'',encryption:'WPA',hidden:false},
+    contact:{name:'', phone:'',email:'',organization:'',website:''},
+    email:{to:'',subject:'',body:''},
     pix:{key:'', name:'', city:'', amount:'', description:''},
   },
-  svg:null, lastPayload:'', lastRevision:-1, revision:0, previewUrl:null,
+  svg:null, exportSvg:null, lastPayload:'', lastRevision:-1, exportRevision:-1, revision:0, previewUrl:null,
   catalogCategory:'all', batchRunning:false, lastFocused:null,
 };
 
@@ -37,49 +38,66 @@ function currentPayload() {
     ? buildTemplate(state.template,state.fields[state.template])
     : $('payloadInput').value;
 }
+function hasInput() {
+  if (state.format.id !== 'qrcode' || state.template === 'text') return Boolean($('payloadInput').value.trim());
+  const fields = state.fields[state.template];
+  return Object.entries(fields).some(([key,value]) => key !== 'encryption' && key !== 'hidden' && String(value ?? '').trim() !== '');
+}
 function refreshCount() {
-  try { const count = [...currentPayload()].length; $('charCount').textContent = `${count.toLocaleString('pt-BR')} caracteres`; }
-  catch { $('charCount').textContent = 'Campos incompletos'; }
+  if (!hasInput()) { $('charCount').textContent = '0 characters'; return; }
+  try { $('charCount').textContent = `${[...currentPayload()].length.toLocaleString('en-US')} characters`; }
+  catch { $('charCount').textContent = 'Incomplete fields'; }
 }
 function syncContrast() {
   const ratio = contrastRatio(state.settings.foreground, state.settings.background);
-  const note = $('downloadNote');
-  const badge = $('readyBadge');
+  const note = $('downloadNote'), badge = $('readyBadge');
   if (ratio < 3) {
-    note.textContent = 'Atenção: pouco contraste entre as cores pode impedir a leitura por scanners.';
+    note.textContent = 'Low color contrast can make codes unreadable. Choose darker foreground and a light background.';
     note.classList.add('warning-text');
-    if (state.svg) {badge.classList.add('warning'); badge.innerHTML = '<i data-lucide="alert-circle"></i> Baixo contraste'; icons();}
+    if (state.svg) {badge.classList.add('warning'); badge.textContent = 'Low contrast';}
   } else {
-    note.textContent = 'PNG, JPG, WEBP ou SVG. O SVG mantém a nitidez em qualquer tamanho.';
+    note.textContent = 'PNG, JPG, WEBP or SVG. SVG is resolution-independent.';
     note.classList.remove('warning-text');
-    if (state.svg) {badge.classList.remove('warning'); badge.innerHTML = '<span class="status-dot"></span> Pronto';}
+    if (state.svg) {badge.classList.remove('warning'); badge.textContent = 'Ready';}
   }
 }
+function clearPreview() {
+  $('previewLoading').hidden = true;
+  $('previewImage').hidden = true;
+  $('previewImage').style.opacity = '1';
+  $('previewError').hidden = true;
+  $('previewEmpty').hidden = false;
+  $('readyBadge').textContent = 'Awaiting input';
+  $('readyBadge').classList.remove('warning');
+  if (state.previewUrl) {URL.revokeObjectURL(state.previewUrl); state.previewUrl = null;}
+  state.svg = null;
+}
 function setBusy() {
+  $('previewEmpty').hidden = true;
   $('previewLoading').hidden = false;
   $('previewError').hidden = true;
-  $('readyBadge').innerHTML = '<span class="status-dot pending-dot"></span> Gerando';
+  $('previewImage').style.opacity = '0.45';
+  $('readyBadge').textContent = 'Generating…';
   $('readyBadge').classList.remove('warning');
 }
 function setError(message) {
   $('previewLoading').hidden = true;
+  $('previewEmpty').hidden = true;
   $('previewImage').hidden = true;
   $('previewError').hidden = false;
   $('previewErrorText').textContent = message;
-  $('readyBadge').innerHTML = '<i data-lucide="alert-circle"></i> Verifique os dados';
+  $('readyBadge').textContent = 'Check input';
   $('readyBadge').classList.add('warning');
-  icons();
 }
 
 async function renderNow() {
-  const revision = state.revision;
-  const format = state.format;
-  const settings = snapshotSettings();
+  const revision = state.revision, format = state.format, settings = snapshotSettings();
+  if (!hasInput()) { clearPreview(); return null; }
   let payload;
   setBusy();
   try {
     payload = currentPayload();
-    const svg = await renderCode(format,payload,settings);
+    const svg = await renderCode(format,payload,settings,{preview:true});
     if (revision !== state.revision) return null;
     state.svg = svg;
     state.lastRevision = revision;
@@ -88,33 +106,45 @@ async function renderNow() {
     const oldUrl = state.previewUrl;
     const image = $('previewImage');
     image.onload = () => { if (oldUrl) URL.revokeObjectURL(oldUrl); };
-    image.onerror = () => { if (revision === state.revision) setError('Não foi possível carregar a prévia SVG.'); };
+    image.onerror = () => { if (revision === state.revision) setError('Could not display this SVG preview.'); if (oldUrl) URL.revokeObjectURL(oldUrl); };
     state.previewUrl = url;
     image.src = url;
     image.hidden = false;
+    image.style.opacity = '1';
     $('previewLoading').hidden = true;
     $('previewError').hidden = true;
+    $('previewEmpty').hidden = true;
     syncContrast();
     return svg;
   } catch (error) {
     if (revision !== state.revision) return null;
     state.svg = null;
     state.lastRevision = revision;
-    setError(error?.message || 'Não foi possível gerar este formato.');
+    setError(error?.message || 'Could not generate this format.');
     return null;
   }
 }
-const scheduleRender = debounce(() => renderNow(), 190);
+// Short trailing-edge debounce: visually updates almost immediately while typing,
+// but expensive QR SVG renders are not launched for every keystroke burst.
+const scheduleRender = debounce(renderNow, 55);
 function changed() {
-  state.revision++;
+  ++state.revision;
+  state.exportSvg = null;
+  state.exportRevision = -1;
   refreshCount();
+  scheduleRender.cancel();
+  if (!hasInput()) { clearPreview(); return; }
   scheduleRender();
 }
 async function ensureResult() {
-  scheduleRender.cancel();
-  if (state.svg && state.lastRevision === state.revision) return state.svg;
-  const svg = await renderNow();
-  if (!svg) throw new Error('Corrija o conteúdo antes de exportar.');
+  if (!hasInput()) throw new Error('Enter a value before exporting.');
+  if (state.exportSvg && state.exportRevision === state.revision) return state.exportSvg;
+  const revision=state.revision;
+  const payload=currentPayload();
+  const svg=await renderCode(state.format,payload,snapshotSettings());
+  if (revision !== state.revision) throw new Error('Settings changed. Please try exporting again.');
+  state.exportSvg = svg;
+  state.exportRevision = revision;
   return svg;
 }
 
@@ -147,7 +177,7 @@ function selectFormat(id) {
   if (state.format.id !== next.id) {
     if (state.template === 'text' || state.format.id !== 'qrcode') state.values[state.format.id] = $('payloadInput').value;
     state.format = next;
-    $('payloadInput').value = state.values[next.id] ?? next.example;
+    $('payloadInput').value = state.values[next.id] ?? '';
   }
   if (next.id !== 'qrcode') {
     state.template = 'text';
@@ -158,7 +188,8 @@ function selectFormat(id) {
   $('formatTriggerLabel').textContent = next.name;
   $('currentFormatName').textContent = next.name;
   $('payloadHint').textContent = next.hint;
-  $('currentFormatHint').textContent = 'Vetor em alta qualidade';
+  $('payloadInput').placeholder = next.example ? `Example: ${next.example}` : `Enter valid ${next.name} data…`;
+  $('currentFormatHint').textContent = 'Crisp vector output';
   syncTemplateUI();
   renderQuickTypes();
   closeCatalog();
@@ -198,19 +229,19 @@ function syncTemplateUI() {
   const container = $('customFields');
   container.replaceChildren(...template.fields.map(field=>addField(field,fields)));
   const details = el('details','payload-details');
-  details.append(el('summary','', 'Ver dados codificados'));
-  const pre = el('pre','', 'Os dados aparecerão após preencher os campos.');
+  details.append(el('summary','', 'View encoded payload'));
+  const pre = el('pre','', 'Fill in the fields to view encoded data.');
   details.append(pre);
   container.append(details);
-  const updatePreview = () => { try { pre.textContent = currentPayload(); } catch (error) {pre.textContent = error.message;} };
-  container.addEventListener('input',updatePreview,{once:true});
+  const updatePreview = () => { if (!hasInput()) { pre.textContent = 'Fill in the fields to view encoded data.'; return; } try { pre.textContent = currentPayload(); } catch (error) {pre.textContent = error.message;} };
+  container.addEventListener('input',updatePreview);
   updatePreview();
 }
 function chooseTemplate(template) {
   if (state.format.id !== 'qrcode' || !TEMPLATES[template]) return;
   if (state.template === 'text') state.values.qrcode = $('payloadInput').value;
   state.template=template;
-  if (template === 'text') $('payloadInput').value=state.values.qrcode || 'https://exemplo.com.br';
+  if (template === 'text') $('payloadInput').value=state.values.qrcode || '';
   syncTemplateUI(); changed();
 }
 
@@ -221,7 +252,7 @@ function syncColor(which) {
 }
 function setColor(which,value) {
   const hex = normalizeHex(value);
-  if (!hex) { syncColor(which); toast('Informe uma cor hexadecimal válida (#RRGGBB).','error'); return; }
+  if (!hex) { syncColor(which); toast('Enter a valid hexadecimal color (#RRGGBB).' ,'error'); return; }
   state.settings[which]=hex;
   syncColor(which);
   changed();
@@ -240,13 +271,13 @@ function resetAll() {
   $('logoSize').value=String(DEFAULTS.logoSize);
   $('logoSizeOutput').textContent=`${DEFAULTS.logoSize}%`;
   $('logoControls').hidden=true;
-  $('uploadTitle').textContent='Clique ou arraste sua logo';
+  $('uploadTitle').textContent='Click or drop your logo';
   $('logoUpload').value='';
   selectFormat('qrcode');
-  $('payloadInput').value='https://exemplo.com.br';
+  $('payloadInput').value='';
   state.values.qrcode=$('payloadInput').value;
   syncTemplateUI(); changed();
-  toast('Configurações restauradas.');
+  toast('Settings reset.');
 }
 
 function openCatalog() {
@@ -272,9 +303,9 @@ function renderCatalog() {
     return btn;
   }));
   const results = searchFormats($('catalogSearchInput').value,state.catalogCategory);
-  $('catalogResultCount').textContent=`${results.length} ${results.length === 1 ? 'formato encontrado' : 'formatos encontrados'}`;
+  $('catalogResultCount').textContent=`${results.length} ${results.length === 1 ? 'format' : 'formats'} found`;
   const list = $('catalogResults');
-  if (!results.length) {list.replaceChildren(el('p','no-results','Nenhum formato encontrado. Tente outro termo.'));return;}
+  if (!results.length) {list.replaceChildren(el('p','no-results','No formats found. Try a different search.'));return;}
   list.replaceChildren(...results.map(format => {
     const btn=el('button',`catalog-item ${format.id===state.format.id?'current':''}`);
     btn.type='button';
@@ -291,17 +322,17 @@ function renderCatalog() {
 
 async function readLogo(file) {
   if (!file) return;
-  if (!['image/png','image/jpeg','image/webp'].includes(file.type)) { toast('Use PNG, JPG ou WEBP para a imagem central.','error'); return; }
-  if (file.size > 2 * 1024 * 1024) {toast('A imagem precisa ter no máximo 2 MB.','error');return;}
+  if (!['image/png','image/jpeg','image/webp'].includes(file.type)) { toast('Use a PNG, JPG or WEBP logo.','error'); return; }
+  if (file.size > 2 * 1024 * 1024) {toast('The image must be 2 MB or smaller.','error');return;}
   try {
     const dataURL = await new Promise((resolve,reject) => {
-      const reader = new FileReader(); reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Falha ao ler imagem.'));reader.readAsDataURL(file);
+      const reader = new FileReader(); reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Could not read the image.'));reader.readAsDataURL(file);
     });
     state.settings.logo=dataURL;
     $('logoControls').hidden=false;
     $('uploadTitle').textContent=file.name;
     changed();
-    toast('Imagem central adicionada. Teste a leitura com um celular.');
+    toast('Logo added. Check the result with a real scanner.');
   } catch(error) {toast(error.message,'error');}
 }
 
@@ -317,36 +348,36 @@ async function saveSingle(kind) {
     else {
       const mime = kind === 'jpeg' ? 'image/jpeg' : kind === 'webp' ? 'image/webp' : 'image/png';
       blob=await svgToRaster(svg,mime,state.settings.size,state.settings.background);
-      if (blob.type !== mime) {ext='png';toast('Formato não suportado pelo navegador; exportando em PNG.','error');}
+      if (blob.type !== mime) {ext='png';toast('Browser does not support that format. Downloading PNG instead.','error');}
     }
     triggerDownload(blob,`${name}.${ext === 'jpeg'?'jpg':ext}`);
-    toast(`Arquivo ${ext.toUpperCase()} preparado.`);
+    toast(`${ext.toUpperCase()} file ready.`);
   } catch (error) {toast(error.message,'error');}
   finally {button.disabled=false;$('exportMenu').hidden=true;$('moreExport').setAttribute('aria-expanded','false');}
 }
 async function copyImage() {
   const btn=$('copyImage');btn.disabled=true;
   try {
-    if (!window.ClipboardItem || !navigator.clipboard?.write) throw new Error('Copiar imagem exige HTTPS ou localhost em um navegador compatível.');
+    if (!window.ClipboardItem || !navigator.clipboard?.write) throw new Error('Copy image requires HTTPS or localhost and a compatible browser.');
     const svg=await ensureResult();
     const blob=await svgToRaster(svg,'image/png',state.settings.size,state.settings.background);
     await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
-    toast('Imagem copiada para a área de transferência.');
+    toast('Image copied to clipboard.');
   } catch(error){toast(error.message,'error');}
   finally {btn.disabled=false;}
 }
 async function copyPayload() {
-  try {const payload=currentPayload();if(!payload) throw new Error('Não há conteúdo para copiar.');
-    if (!navigator.clipboard?.writeText) throw new Error('A cópia requer HTTPS ou localhost.');
-    await navigator.clipboard.writeText(payload);toast('Conteúdo copiado.');
+  try {const payload=currentPayload();if(!payload) throw new Error('There is nothing to copy.');
+    if (!navigator.clipboard?.writeText) throw new Error('Clipboard access requires HTTPS or localhost.');
+    await navigator.clipboard.writeText(payload);toast('Content copied.');
   } catch(error) {toast(error.message,'error');}
 }
 async function downloadBatch() {
   if(state.batchRunning) return;
-  if (!window.JSZip) {toast('Biblioteca ZIP não carregada. Verifique sua conexão.','error');return;}
+  try {await ensureEngine('zip');} catch (error) {toast(error.message,'error');return;}
   const lines=$('batchInput').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
-  if(!lines.length){toast('Insira pelo menos uma linha para gerar o lote.','error');return;}
-  if(lines.length>60){toast('O limite por lote é de 60 códigos.','error');return;}
+  if(!lines.length){toast('Enter at least one line to generate a batch.','error');return;}
+  if(lines.length>60){toast('Batch generation is limited to 60 entries.','error');return;}
   const button=$('downloadBatch'), progress=$('batchProgress');
   state.batchRunning=true;button.disabled=true;
   const format={...state.format}, settings=snapshotSettings();
@@ -355,23 +386,23 @@ async function downloadBatch() {
   const errors=[];
   try {
     for(let i=0;i<lines.length;i++){
-      progress.textContent=`Processando ${i+1} de ${lines.length} códigos...`;
+      progress.textContent=`Processing ${i+1} of ${lines.length} codes…`;
       try {
         const svg=await renderCode(format,lines[i],settings);
         const blob=await svgToRaster(svg,'image/png',settings.size,settings.background);
         zip.file(`${format.id}-${String(i+1).padStart(3,'0')}.png`,blob);
         succeeded++;
-      } catch(error){errors.push(`Linha ${i+1}: ${error?.message || 'Erro desconhecido'}`);}
+      } catch(error){errors.push(`Line ${i+1}: ${error?.message || 'Unknown error'}`);}
       if(i%3===0) await nextFrame();
     }
-    if(!succeeded) throw new Error('Nenhuma linha foi codificada. Verifique os conteúdos.');
-    if(errors.length) zip.file('erros.txt',errors.join('\n'));
-    progress.textContent='Compactando arquivos...';await nextFrame();
+    if(!succeeded) throw new Error('No entries could be encoded. Check the input format.');
+    if(errors.length) zip.file('errors.txt',errors.join('\n'));
+    progress.textContent='Compressing files…';await nextFrame();
     const archive=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:4}});
-    triggerDownload(archive,`aidc-${safeFilename(format.id)}-lote.zip`);
-    progress.textContent=`${succeeded} código(s) exportado(s)${errors.length?` · ${errors.length} erro(s) documentado(s) no ZIP`:''}.`;
-    toast(`Lote de ${succeeded} códigos exportado.`);
-  }catch(error){progress.textContent='Não foi possível concluir a exportação.';toast(error.message,'error');}
+    triggerDownload(archive,`aidc-${safeFilename(format.id)}-batch.zip`);
+    progress.textContent=`${succeeded} code(s) exported${errors.length?` · ${errors.length} error(s) saved inside the ZIP`:''}.`;
+    toast(`Exported ${succeeded} codes.`);
+  }catch(error){progress.textContent='Could not complete batch export.';toast(error.message,'error');}
   finally {state.batchRunning=false;button.disabled=false;}
 }
 
@@ -397,7 +428,7 @@ function attachEvents() {
   for (const event of ['dragenter','dragover']) upload.addEventListener(event,e=>{e.preventDefault();upload.classList.add('drag-over');});
   for (const event of ['dragleave','drop']) upload.addEventListener(event,e=>{e.preventDefault();upload.classList.remove('drag-over');});
   upload.addEventListener('drop',e=>readLogo(e.dataTransfer?.files?.[0]));
-  $('removeLogo').addEventListener('click',()=>{state.settings.logo=null;$('logoUpload').value='';$('logoControls').hidden=true;$('uploadTitle').textContent='Clique ou arraste sua logo';changed();});
+  $('removeLogo').addEventListener('click',()=>{state.settings.logo=null;$('logoUpload').value='';$('logoControls').hidden=true;$('uploadTitle').textContent='Click or drop your logo';changed();});
   for(const id of ['openCatalog','openCatalogSide']) $(id).addEventListener('click',openCatalog);
   for(const id of ['closeCatalog','modalCancel']) $(id).addEventListener('click',closeCatalog);
   $('catalogModal').addEventListener('mousedown',e=>{if(e.target===$('catalogModal'))closeCatalog();});
@@ -426,8 +457,8 @@ function attachEvents() {
   });
   window.addEventListener('beforeunload',()=>{if(state.previewUrl)URL.revokeObjectURL(state.previewUrl);});
 }
-function openBatch() { $('batchBody').hidden=false; $('toggleBatch').innerHTML='Fechar <i data-lucide="chevron-up"></i>';icons(); }
-function closeBatch() { $('batchBody').hidden=true;$('toggleBatch').innerHTML='Modo lote <i data-lucide="arrow-up-right"></i>';icons(); }
+function openBatch() { $('batchBody').hidden=false; $('toggleBatch').innerHTML='Close <i data-lucide="chevron-up"></i>';icons(); }
+function closeBatch() { $('batchBody').hidden=true;$('toggleBatch').innerHTML='Batch mode <i data-lucide="arrow-up-right"></i>';icons(); }
 
 function init() {
   $('totalFormatCount').textContent = `${FORMATS.length}+`;
@@ -435,5 +466,7 @@ function init() {
   attachEvents();
   selectFormat('qrcode');
   icons();
+  if ('requestIdleCallback' in window) requestIdleCallback(warmupEngines, {timeout: 1800});
+  else setTimeout(warmupEngines, 300);
 }
 init();

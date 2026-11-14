@@ -5,15 +5,15 @@ const escapeVCard = value => safe(value).replace(/\\/g, '\\\\').replace(/\n/g, '
 export const normalizeAscii = value => safe(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, '');
 
 export function buildWifi({ ssid = '', password = '', encryption = 'WPA', hidden = false }) {
-  if (!safe(ssid)) throw new Error('Informe o nome da rede (SSID).');
+  if (!safe(ssid)) throw new Error('Enter a Wi-Fi network name (SSID).');
   const type = encryption === 'nopass' ? 'nopass' : encryption === 'WEP' ? 'WEP' : 'WPA';
   const pass = type === 'nopass' ? '' : escapeWifi(password);
-  if (type !== 'nopass' && !pass) throw new Error('Informe a senha da rede Wi-Fi.');
+  if (type !== 'nopass' && !pass) throw new Error('Enter the Wi-Fi password.');
   return `WIFI:T:${type};S:${escapeWifi(ssid)};P:${pass};H:${hidden ? 'true' : 'false'};;`;
 }
 
 export function buildContact({ name = '', phone = '', email = '', organization = '', website = '' }) {
-  if (!safe(name)) throw new Error('Informe o nome do contato.');
+  if (!safe(name)) throw new Error('Enter a contact name.');
   const lines = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${escapeVCard(name)}`];
   if (safe(phone)) lines.push(`TEL;TYPE=CELL:${escapeVCard(phone)}`);
   if (safe(email)) lines.push(`EMAIL:${escapeVCard(email)}`);
@@ -24,8 +24,8 @@ export function buildContact({ name = '', phone = '', email = '', organization =
 }
 
 export function buildEmail({ to = '', subject = '', body = '' }) {
-  if (!safe(to)) throw new Error('Informe o e-mail do destinatário.');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(safe(to))) throw new Error('Informe um endereço de e-mail válido.');
+  if (!safe(to)) throw new Error('Enter the recipient email address.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(safe(to))) throw new Error('Enter a valid email address.');
   const params = new URLSearchParams();
   if (safe(subject)) params.set('subject', safe(subject));
   if (safe(body)) params.set('body', safe(body));
@@ -42,7 +42,7 @@ export function crc16Ccitt(value) {
 }
 
 function emvField(id, contents) {
-  if (contents.length > 99) throw new Error(`Campo ${id} excede o tamanho permitido.`);
+  if (contents.length > 99) throw new Error(`Field ${id} exceeds the allowed length.`);
   return `${id}${String(contents.length).padStart(2, '0')}${contents}`;
 }
 
@@ -53,17 +53,17 @@ function emvField(id, contents) {
  */
 export function buildPix({ key = '', name = '', city = '', amount = '', description = '' }) {
   const pixKey = safe(key);
-  if (!pixKey) throw new Error('Informe a chave PIX.');
-  if (pixKey.length > 77) throw new Error('A chave PIX deve ter no máximo 77 caracteres.');
+  if (!pixKey) throw new Error('Enter a Pix key.');
+  if (pixKey.length > 77) throw new Error('A Pix key must contain at most 77 characters.');
   const merchant = normalizeAscii(name).toUpperCase().slice(0, 25);
   const location = normalizeAscii(city).toUpperCase().slice(0, 15);
-  if (!merchant || !location) throw new Error('Informe o nome do recebedor e a cidade.');
+  if (!merchant || !location) throw new Error('Enter the recipient name and city.');
   let amountValue = '';
   if (safe(amount)) {
     const normalized = safe(amount).replace(',', '.');
     const numeric = Number(normalized);
     if (!/^\d+(?:[.,]\d{1,2})?$/.test(safe(amount)) || !Number.isFinite(numeric) || numeric <= 0 || numeric > 9999999999.99) {
-      throw new Error('O valor PIX deve ser positivo e usar até duas casas decimais.');
+      throw new Error('The Pix amount must be positive, with up to two decimal places.');
     }
     amountValue = numeric.toFixed(2);
   }
@@ -75,31 +75,31 @@ export function buildPix({ key = '', name = '', city = '', amount = '', descript
 }
 
 export const TEMPLATES = {
-  text: { label: 'Texto / URL', fields: [] },
+  text: { label: 'Text / URL', fields: [] },
   wifi: { label: 'Wi-Fi', fields: [
-    { key: 'ssid', label: 'Nome da rede (SSID)', placeholder: 'Minha rede' },
-    { key: 'password', label: 'Senha Wi-Fi', placeholder: 'Senha da rede' },
-    { key: 'encryption', label: 'Segurança', type: 'select', options: [['WPA','WPA / WPA2 / WPA3'], ['WEP','WEP'], ['nopass','Sem senha']] },
-    { key: 'hidden', label: 'Rede oculta', type: 'checkbox' },
+    { key: 'ssid', label: 'Network name (SSID)', placeholder: 'My network' },
+    { key: 'password', label: 'Wi-Fi password', placeholder: 'Network password' },
+    { key: 'encryption', label: 'Security', type: 'select', options: [['WPA','WPA / WPA2 / WPA3'], ['WEP','WEP'], ['nopass','No password']] },
+    { key: 'hidden', label: 'Hidden network', type: 'checkbox' },
   ] },
-  contact: { label: 'Contato', fields: [
-    { key: 'name', label: 'Nome completo', placeholder: 'Maria Silva' },
-    { key: 'phone', label: 'Telefone', placeholder: '+55 11 99999-9999' },
-    { key: 'email', label: 'E-mail', placeholder: 'maria@exemplo.com' },
-    { key: 'organization', label: 'Organização', placeholder: 'Empresa' },
+  contact: { label: 'Contact', fields: [
+    { key: 'name', label: 'Full name', placeholder: 'Jane Doe' },
+    { key: 'phone', label: 'Phone', placeholder: '+55 11 99999-9999' },
+    { key: 'email', label: 'Email', placeholder: 'jane@example.com' },
+    { key: 'organization', label: 'Organization', placeholder: 'Company' },
     { key: 'website', label: 'Website', placeholder: 'https://...' },
   ] },
-  email: { label: 'E-mail', fields: [
-    { key: 'to', label: 'Destinatário', placeholder: 'contato@exemplo.com' },
-    { key: 'subject', label: 'Assunto', placeholder: 'Olá!' },
-    { key: 'body', label: 'Mensagem', placeholder: 'Gostaria de entrar em contato...' },
+  email: { label: 'Email', fields: [
+    { key: 'to', label: 'Recipient', placeholder: 'hello@example.com' },
+    { key: 'subject', label: 'Subject', placeholder: 'Hello' },
+    { key: 'body', label: 'Message', placeholder: 'I would like to get in touch…' },
   ] },
   pix: { label: 'PIX', fields: [
-    { key: 'key', label: 'Chave PIX', placeholder: 'CPF, e-mail, telefone ou chave aleatória' },
-    { key: 'name', label: 'Nome do recebedor', placeholder: 'LOJA EXEMPLO' },
-    { key: 'city', label: 'Cidade do recebedor', placeholder: 'GOIANIA' },
-    { key: 'amount', label: 'Valor em R$ (opcional)', placeholder: '25,90' },
-    { key: 'description', label: 'Descrição (opcional)', placeholder: 'Pagamento do pedido' },
+    { key: 'key', label: 'Pix key', placeholder: 'CPF, email, phone or random key' },
+    { key: 'name', label: 'Recipient name', placeholder: 'EXAMPLE STORE' },
+    { key: 'city', label: 'Recipient city', placeholder: 'GOIANIA' },
+    { key: 'amount', label: 'Amount in BRL (optional)', placeholder: '25.90' },
+    { key: 'description', label: 'Description (optional)', placeholder: 'Order payment' },
   ] },
 };
 

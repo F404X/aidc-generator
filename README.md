@@ -1,123 +1,73 @@
 # AIDC Studio
 
-Gerador universal de códigos AIDC (Automatic Identification and Data Capture), com interface em português, personalização avançada, exportação de imagem e processamento no navegador.
+A responsive, privacy-oriented AIDC barcode and QR code generator built with HTML, CSS, and native JavaScript modules. The interface uses **English** and the **charcoal + warm yellow** visual language of the [F404X portfolio](https://github.com/F404X/f404x-portfolio).
 
-**110 simbologias no catálogo**, distribuídas entre códigos bidimensionais, lineares, varejo, GS1, postais e saúde/HIBC. A lista acompanha os identificadores disponíveis no motor `bwip-js` 4.11.4. Nem toda simbologia aceita texto arbitrário: normas de GS1, pagamentos, documentos e códigos postais exigem dados e estruturas próprias.
+## Features
 
-## Funcionalidades
+- Browse **110 barcode symbologies** through a searchable catalog, from QR, Data Matrix, Aztec, PDF417, Code 128 and EAN/UPC to specialist GS1, postal, and healthcare encoders.
+- A **blank editor on first load**. Every format has an informative placeholder and input hint, but no code is generated until the user supplies data.
+- QR Code styling: **square modules**, rounded modules, dots, several corner shapes, error-correction level, optional centered logo, and foreground/background colors.
+- **Live preview** after a short 55 ms debounce, with a smaller working preview for speed and a full-resolution vector regenerated on export.
+- Export **SVG, PNG, JPG, WEBP**, copy image or content, and generate **up to 60 codes at once in ZIP** (errors are included as a text file).
+- QR payload builders for URLs/text, Wi-Fi, vCard contacts, email, and Brazilian static Pix BR Code.
+- Data is encoded in the browser, never sent to an API. Library scripts and fonts are loaded from external CDNs; the CDN providers receive normal HTTP metadata, not the entered data.
 
-- QR Code customizável: módulos, cantos, cores, nível de correção de erros e imagem central (PNG/JPG/WEBP até 2 MB).
-- Templates de QR Code para texto/URL, redes Wi‑Fi, contato vCard 3.0, e-mail (`mailto:`) e PIX estático (BR Code com CRC16).
-- Outros formatos 1D e 2D, incluindo Code 128/39/93, EAN, UPC, ITF, Data Matrix, PDF417, Aztec, MaxiCode, GS1 DataBar, GS1-128, HIBC, padrões postais e mais.
-- Prévia reativa, busca no catálogo por nome/aplicação, aviso para cores com baixo contraste.
-- Exportação **PNG, SVG, JPG e WEBP**; cópia de imagem e conteúdo para a área de transferência.
-- **Geração em lote** de até 60 itens por vez com download de um ZIP. O lote usa o **conteúdo de cada linha como dado bruto**, inclusive no modo QR. Os resultados com falha entram em `erros.txt`.
-- Layout responsivo (desktop e celular), acessibilidade básica, atalhos e sem backend.
+**Important:** The catalog includes specialized standards that do **not** accept arbitrary text. Check digits, Application Identifiers, data lengths, and carrier or country specifications must be valid. Popular numeric GTIN/UPC formats include automatic Mod-10 check-digit calculation. For production labels and payments, validate results with the intended scanner or official application. The catalog is an encoder inventory, not a guarantee that every sample payload is standard-compliant.
 
-## Executar localmente
+## Run locally
 
-Este site é **estático**, feito com HTML, CSS e JavaScript (módulos ES). Não precisa instalar dependências nem compilar. É necessário ter **acesso à internet para baixar as bibliotecas a partir dos CDNs** quando a página carrega; as informações introduzidas pelo usuário não são enviadas ao CDN.
+Requirements: Node.js 18 or newer.
 
 ```bash
-# Requer Node.js 18+; porta padrão 4173
 npm run dev
 ```
 
-Abra `http://localhost:4173` no navegador. Alternativa sem Node:
+Open `http://localhost:4173` (default). This is a **static** site; no build system, backend, or database is required. Avoid opening `index.html` via `file://` because some browsers block ES modules there.
 
-```bash
-python -m http.server 4173
-```
-
-Atenção: abrir `index.html` diretamente com `file://` pode bloquear módulos ES e a API de clipboard em alguns navegadores. Use um servidor local.
-
-### Testes
+## Tests
 
 ```bash
 npm run check
 npm test
 ```
 
-Os testes automatizados cobrem o catálogo, geração de Wi‑Fi/vCard/e-mail/PIX, CRC e funções auxiliares. A leitura efetiva e a exportação de cada simbologia devem ser verificadas em um navegador moderno e com scanner compatível. **Não há afirmação de certificação GS1, bancária ou postal**.
+Tests cover payload builders, validation, catalog and utilities. Browser interaction tests require a running browser. Since the encoder libraries are downloaded from CDNs, an internet connection is required for first-time use. If a CDN is blocked, the app tries alternate providers and shows a clear loading error.
 
-## Criar e publicar o repositório GitHub
+## Deployment
 
-Crie um repositório vazio com o nome `aidc-generator` em [github.com/new](https://github.com/new?name=aidc-generator). **Não** marque “Add a README”, pois o projeto já tem um. Depois, dentro da pasta extraída do ZIP, execute:
+**GitHub Pages:** Repository **Settings → Pages → Deploy from a branch → `main` → `/(root)`**. The expected address is `https://f404x.github.io/aidc-generator/` once deployment completes.
 
-```bash
-git init
-git branch -M main
-git add .
-git commit -m "feat: initial AIDC Studio release"
-git remote add origin https://github.com/F404X/aidc-generator.git
-git push -u origin main
-```
+**Cloudflare Pages:** Connect the GitHub repository, use no build command and set output directory to `.`. The `_headers` file applies CSP and privacy-related headers on Cloudflare Pages.
 
-Você precisa estar autenticado no GitHub pelo Git Credential Manager ou credencial equivalente. Alternativa: se tiver GitHub CLI autenticada, rode `gh repo create F404X/aidc-generator --public --source=. --remote=origin --push` dentro da pasta (sem os comandos acima).
+## Shortcuts
 
-## Deploy
+- `/` — Open format catalog (outside editor controls).
+- `Ctrl/Cmd + Enter` — Generate current preview.
+- `Ctrl/Cmd + S` — Download PNG.
+- `Esc` — Close catalog or export menu.
 
-### Cloudflare Pages
+## Limitations and privacy
 
-1. Envie os arquivos para um repositório GitHub.
-2. No painel Cloudflare, crie um projeto **Workers & Pages → Pages → Connect to Git**.
-3. Selecione o repositório e defina:
-   - **Framework preset:** None
-   - **Build command:** deixe vazio (sem build)
-   - **Build output directory:** `.` (raiz do repositório)
-4. Faça o deploy. O arquivo `_headers` aplica cabeçalhos de segurança na Cloudflare Pages.
+- Centered logo support applies to **regular QR Codes** only. Error correction is raised to H with a logo. Very large logos or low-contrast colors can still make a code unreadable.
+- Static Pix QR payloads are **not verified dynamic payment charges**. Verify recipient and amount before paying.
+- Image clipboard access requires HTTPS or localhost and browser Clipboard API support.
+- The ZIP exporter handles raw data lines; it does not interpret the structured QR form templates in batch mode.
+- The fonts and libraries are third-party resources loaded from pinned CDN versions; an offline build would need local, separately licensed vendor files.
 
-### GitHub Pages
-
-Em **Settings → Pages**, configure **Deploy from a branch** → `main` → `/(root)`. O site funciona como conteúdo estático; o arquivo `_headers` é específico da Cloudflare Pages.
-
-## Atalhos
-
-| Atalho | Ação |
-| --- | --- |
-| `Ctrl/Cmd + Enter` | Atualizar prévia |
-| `Ctrl/Cmd + S` | Baixar PNG |
-| `/` | Abrir biblioteca de formatos (fora de campos de texto) |
-| `Esc` | Fechar biblioteca / menu de exportação |
-
-## Notas importantes
-
-- **Logo central:** suportada somente pelo **QR Code comum** (`qrcode`). QR GS1, Data Matrix, Aztec, MaxiCode etc. não recebem logos, para preservar suas regras. A biblioteca usa correção de erros `H` automaticamente quando há logo, mas isso **não garante leitura**. Teste com leitores e impressão reais; mantenha margem/contraste.
-- **PIX:** o modelo cria **BR Code estático** (não uma cobrança dinâmica). Confira chave, valor e identificação do recebedor no aplicativo bancário antes de qualquer pagamento. Não use uma chave de teste pensando que a cobrança será liquidada.
-- **Normas especializadas:** formatos GS1, ISBN/ISSN, UPC/EAN, HIBC, postais ou documentos podem exigir GTINs válidos, dígitos verificadores, AIs, conjuntos de caracteres, comprimentos, licenças ou campos especiais. O gerador fornece a simbologia, **não emite identificadores oficiais**.
-- **Privacidade:** a geração é feita localmente no navegador. O site carrega scripts e fontes de serviços externos; estes podem receber metadados usuais de uma requisição HTTP (ex.: endereço IP), mas não o conteúdo digitado para gerar os códigos. O app não possui backend, analytics nem mecanismo de upload de dados. Imagens usadas como logos são lidas via `FileReader`.
-- **Offline:** nesta versão, os arquivos JavaScript externos dependem de conexão à internet para carregamento inicial. Para uma implantação totalmente offline, hospede versões auditadas dos recursos de terceiros no próprio domínio e atualize os caminhos no `index.html` e na política CSP.
-- **Clipboard:** copiar imagens exige contexto seguro (`https://` ou localhost) e suporte do navegador à Clipboard API.
-- **Exportação:** SVG é vetorial; PNG/JPG/WEBP são rasterizados com a dimensão configurada. O navegador pode usar PNG como fallback quando não suportar o formato solicitado.
-
-## Arquitetura
+## Architecture
 
 ```text
-aidc-generator/
-├── index.html           # marcação e estrutura do aplicativo
-├── styles.css           # design responsivo e dark mode
-├── assets/favicon.svg
-├── src/
-│   ├── app.mjs          # interações, biblioteca, lote e exportação
-│   ├── catalog.mjs      # catálogo de 110 simbologias
-│   ├── renderer.mjs     # QR estilizado, bwip-js e SVG/Canvas
-│   ├── payloads.mjs     # modelos de conteúdo e PIX CRC16
-│   └── utils.mjs        # cor, contraste, nomes e utilitários
-├── scripts/serve.mjs    # servidor HTTP de desenvolvimento
-├── tests/payloads.test.mjs
-├── _headers             # headers para Cloudflare Pages
-├── package.json
-└── LICENSE
+index.html                 UI shell
+styles.css                 charcoal/yellow responsive theme
+src/app.mjs                editor, live preview, exports, catalog, batch
+src/catalog.mjs            searchable symbology catalog
+src/renderer.mjs           SVG rendering, sanitization, raster exports
+src/engines.mjs            encoder initialization and CDN fallbacks
+src/validation.mjs         basic standard input checks and Mod-10
+src/payloads.mjs           QR content templates and Pix CRC16
+src/utils.mjs              shared helpers
+scripts/serve.mjs          minimal local development server
+tests/payloads.test.mjs    automated tests
 ```
 
-### Bibliotecas (via CDN, versões fixas)
-
-| Biblioteca | Versão | Papel |
-| --- | --- | --- |
-| [`bwip-js`](https://github.com/metafloor/bwip-js) | 4.11.4 | Renderização das simbologias BWIPP |
-| [`qr-code-styling`](https://github.com/kozakdenys/qr-code-styling) | 1.9.2 | QR Code visual, logo e correção de erros |
-| [`JSZip`](https://stuk.github.io/jszip/) | 3.10.1 | ZIP de códigos em lote |
-| [`Lucide`](https://lucide.dev/) | 0.468.0 | Ícones de interface |
-| Google Fonts: DM Sans, Space Grotesk | online | Tipografia (com fallback local) |
-
-Código original publicado sob a **licença MIT**. Cada biblioteca possui licença própria; mantenha os avisos correspondentes conforme as licenças dessas dependências.
+Libraries: [bwip-js 4.11.4](https://github.com/metafloor/bwip-js) (barcode encoders), [qr-code-styling 1.9.2](https://github.com/kozakdenys/qr-code-styling) (custom QR), [JSZip 3.10.1](https://stuk.github.io/jszip/), and [Lucide](https://lucide.dev/) icons. Each external dependency has its own license. This project is MIT licensed.

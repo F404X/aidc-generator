@@ -1,15 +1,17 @@
 {
   "name": "aidc-generator",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "Gerador universal de códigos AIDC, QR Code e códigos de barras, sem backend.",
+  "description": "Fast English-language QR and barcode generator with 110 AIDC symbologies, a dark yellow theme, and live SVG previews.",
   "type": "module",
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "start": "node scripts/serve.mjs",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check src/app.mjs && node --check src/renderer.mjs && node --check src/catalog.mjs && node --check src/payloads.mjs && node --check src/utils.mjs"
+    "check": "node --check src/app.mjs && node --check src/renderer.mjs && node --check src/catalog.mjs && node --check src/payloads.mjs && node --check src/utils.mjs && node --check src/engines.mjs && node --check src/validation.mjs"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "license": "MIT"
 }
