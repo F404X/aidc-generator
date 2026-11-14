@@ -413,7 +413,7 @@ async function processLogo() {
 }
 async function readLogo(file) {
  if(!file)return;
- if(!/^image\\/(png|jpeg|webp|gif|bmp)$/i.test(file.type)){toast('Choose PNG, JPG, WEBP, GIF or BMP.','error');return;}
+ if(!/^image\/(png|jpeg|webp|gif|bmp)$/i.test(file.type)){toast('Choose PNG, JPG, WEBP, GIF or BMP.','error');return;}
  if(file.size>10*1024*1024){toast('The image must be 10 MB or smaller.','error');return;}
  state.logoSource=file;$('uploadTitle').textContent=file.name;
  try{await processLogo();toast('Logo ready. Use Edit Image to customize.');}

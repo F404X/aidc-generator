@@ -25,7 +25,7 @@ export function thumbnailSamples(format) {
   mailmark:['JGB 012100123412345678XY1A 0','12345678901234567890'],
   auspost:['5956439111ABA 9','5956439111'],
   gs1northamericancoupon:['(8110)10614141123456(3900)001000'],
-  swissqrcode:['SPC\\n0200\\n1\\nCH4431999123000889012\\nS\\nSAMPLE AG\\nMain Street 1\\n8000\\nZURICH\\nCH\\n\\n\\n\\n\\n\\n\\n25.00\\nCHF\\nS\\nDEMO USER\\nMain Street 1\\n8000\\nZURICH\\nCH\\nNON\\n\\nEPD'],
+  swissqrcode:['SPC\n0200\n1\nCH4431999123000889012\nS\nSAMPLE AG\nMain Street 1\n8000\nZURICH\nCH\n\n\n\n\n\n\n25.00\nCHF\nS\nDEMO USER\nMain Street 1\n8000\nZURICH\nCH\nNON\n\nEPD'],
  };
  const fallback=format.kind==='matrix'?['HELLO','123','123456789','BATCH-001']:['123456','12345678','123456789012','ABC123','A123456B'];
  if(format.category==='gs1')fallback.unshift('(01)09506000134352','09506000134352','(01)09506000134352(10)BATCH');
