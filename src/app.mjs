@@ -3,6 +3,7 @@ import { TEMPLATES, buildTemplate } from './payloads.mjs?v=1.4.0';
 import { renderCode, svgBlob, svgToRaster } from './renderer.mjs?v=1.5.0';
 import { ensureEngine, warmupEngines } from './engines.mjs?v=1.4.0';
 import { observeThumbnail, unobserveThumbnails } from './thumbnails.mjs?v=1.4.0';
+import {variationSpec} from './variations.mjs?v=1.6.0';
 import { normalizeHex, contrastRatio, safeFilename, triggerDownload, nextFrame, debounce } from './utils.mjs?v=1.4.0';
 
 const $ = id => document.getElementById(id);
@@ -17,7 +18,7 @@ const CAPTION_DEFAULTS={wifi:{},contact:{},email:{},pix:{}};
 
 const state = {
   format: lookupFormat('qrcode'), template:'text', settings:{...DEFAULTS},
-  values: {qrcode:'https://example.com'}, fields:structuredClone(SAMPLE_FIELDS), captions:structuredClone(CAPTION_DEFAULTS), logoSource:null, logoToken:0,
+  values: {qrcode:'https://example.com'}, fields:structuredClone(SAMPLE_FIELDS), captions:structuredClone(CAPTION_DEFAULTS), variations:{}, logoSource:null, logoToken:0,
   svg:null, exportSvg:null, lastPayload:'', lastRevision:-1, exportRevision:-1, revision:0, previewUrl:null, previewToken:0,
   catalogCategory:'all', batchRunning:false, lastFocused:null,
 };
@@ -37,7 +38,7 @@ function toast(message, type='success') {
   setTimeout(() => { item.classList.add('toast-out'); setTimeout(()=>item.remove(),250); },3500);
 }
 function snapshotSettings() {
-  const settings={...state.settings};
+  const settings={...state.settings,variation:state.variations[state.format.id]||'auto'};
   if(state.format.id==='qrcode' && state.template!=='text'){
     settings.captionItems=TEMPLATES[state.template].fields
       .filter(field=>state.captions[state.template]?.[field.key] && String(state.fields[state.template][field.key]??'').trim())
@@ -208,6 +209,24 @@ function renderQuickTypes() {
 
   icons();
 }
+function syncVariation(format) {
+  const row=$('variationRow'),select=$('variationSelect'),hint=$('variationHint');
+  const spec=variationSpec(format.id);
+  row.hidden=!spec;
+  if(!spec){select.replaceChildren();return;}
+  const auto=el('option','','Auto Select');auto.value='auto';
+  const versions=spec.options.map(item=>{
+    const option=el('option','',item.label);
+    option.value=item.value;
+    return option;
+  });
+  select.replaceChildren(auto,...versions);
+  const selected=state.variations[format.id]||'auto';
+  select.value=spec.options.some(item=>item.value===selected)?selected:'auto';
+  select.setAttribute('aria-label',spec.title);
+  $('variationDescription').textContent=spec.title;
+  hint.textContent=spec.hint;
+}
 function selectFormat(id) {
   const next = lookupFormat(id);
   if (state.format.id !== next.id) {
@@ -226,6 +245,7 @@ function selectFormat(id) {
   $('payloadHint').textContent = next.hint;
   $('payloadInput').placeholder = next.example ? `Example: ${next.example}` : `Enter valid ${next.name} data…`;
   $('currentFormatHint').textContent = 'Crisp vector output';
+  syncVariation(next);
   syncTemplateUI();
   renderQuickTypes();
   closeCatalog();
@@ -301,7 +321,7 @@ function syncOpacity(which) {
   $(`${which}OpacityOutput`).textContent = `${value}%`;
 }
 function resetAll() {
-  state.settings={...DEFAULTS}; state.template='text';state.values={qrcode:'https://example.com'};state.fields=structuredClone(SAMPLE_FIELDS);state.captions=structuredClone(CAPTION_DEFAULTS);state.logoSource=null;state.logoToken++;
+  state.settings={...DEFAULTS};state.variations={}; state.template='text';state.values={qrcode:'https://example.com'};state.fields=structuredClone(SAMPLE_FIELDS);state.captions=structuredClone(CAPTION_DEFAULTS);state.logoSource=null;state.logoToken++;
   for(const prop of ['foreground','background']) {
     syncColor(prop);
     syncOpacity(prop);
@@ -484,6 +504,10 @@ async function downloadBatch() {
 }
 
 function attachEvents() {
+  $('variationSelect').addEventListener('change',event=>{
+    state.variations[state.format.id]=event.target.value;
+    changed();
+  });
   $('payloadInput').addEventListener('input',()=>{state.values[state.format.id]=$('payloadInput').value;changed();});
   for(const btn of document.querySelectorAll('[data-template]')) btn.addEventListener('click',()=>chooseTemplate(btn.dataset.template));
   for(const prop of ['foreground','background']) {

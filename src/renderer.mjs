@@ -3,6 +3,7 @@ import { ensureEngine } from './engines.mjs?v=1.3.0';
 import { prepareBarcodePayload } from './validation.mjs?v=1.3.0';
 import { encodeRmqr, REQUIRED_OPTIONS } from './symbology-options.mjs?v=1.3.0';
 import {overlayQrLogo,appendQrCaption} from './qr-extensions.mjs?v=1.5.0';
+import {variationOptions,qrVersion} from './variations.mjs?v=1.6.0';
 
 const SVG_MIME = 'image/svg+xml;charset=utf-8';
 function drawBwip(format, text, settings, preview) {
@@ -23,9 +24,12 @@ function drawBwip(format, text, settings, preview) {
     ...(REQUIRED_OPTIONS[format.id] || {}),
     ...(['datamatrix','gs1datamatrix','hibcdatamatrix'].includes(format.id)?{format:'square'}:{}),
   };
-  return format.id === 'rectangularmicroqrcode'
-    ? encodeRmqr(options => window.bwipjs.toSVG(options), options)
-    : window.bwipjs.toSVG(options);
+  const selected=variationOptions(format.id,settings.variation);
+  if(format.id==='rectangularmicroqrcode'){
+    if(selected.version)return window.bwipjs.toSVG({...options,...selected,eclevel:'M'});
+    return encodeRmqr(candidate=>window.bwipjs.toSVG(candidate),options);
+  }
+  return window.bwipjs.toSVG({...options,...selected});
 }
 
 export async function renderCode(format, payload, settings, { preview = false } = {}) {
@@ -50,6 +54,7 @@ export async function renderCode(format, payload, settings, { preview = false } 
         bcid: 'qrcode', text,
         scale: preview ? 3 : Math.max(3, Math.round(settings.size / 100)),
         eclevel: settings.correction,
+        ...variationOptions('qrcode',settings.variation),
         barcolor: settings.foreground.slice(1),
         padding: Math.max(4, settings.margin),
       })), settings), settings), settings.captionItems,settings);
@@ -63,7 +68,7 @@ async function styledQr(data, settings, preview) {
   const qr = new window.QRCodeStyling({
     width: size, height: size, type: 'svg', data, margin,
     // The preprocessed logo is embedded into the final SVG, without async QR image-loading.
-    qrOptions: { typeNumber: 0, errorCorrectionLevel: settings.logo ? 'H' : settings.correction },
+    qrOptions: { typeNumber: qrVersion(settings.variation), errorCorrectionLevel: settings.logo ? 'H' : settings.correction },
     dotsOptions: { type: settings.dotStyle, color: rgbaColor(settings.foreground, settings.foregroundOpacity) },
     cornersSquareOptions: { type: settings.cornerStyle, color: rgbaColor(settings.foreground, settings.foregroundOpacity) },
     cornersDotOptions: { type: settings.cornerStyle === 'square' ? 'square' : 'dot', color: rgbaColor(settings.foreground, settings.foregroundOpacity) },

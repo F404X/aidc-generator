@@ -109,3 +109,20 @@ The preview uses an adaptive white-gray checkerboard for transparency, and defau
 ## v1.5.1 – faster catalog thumbnails
 
 Catalog specimens are created once per symbology using the lightweight BWIPP SVG encoder at scale 1, then cached as tiny image object URLs. They no longer need PNG rasterization, canvas allocation or the styled QR engine. Rendering is lazy, with up to three simultaneous tasks and browser yielding between failed fixture attempts. Real examples were expanded for specialized postal, GS1, composite, HIBC and Swiss QR formats. An unsupported structured sample continues to be labeled honestly rather than replaced with a fictional barcode.
+
+## v1.6 — Variation / Auto Select
+
+An adaptive **Variation** field appears on formats that expose symbol-size, version, layer, or column controls. **Auto Select** is the default for every supported format; fixed versions are validated, encoded without silent substitution and may fail when the selected geometry cannot contain the input. Variation selections are remembered independently for each format and carried into PNG, SVG, WEBP, JPEG, copied images and batch ZIP exports.
+
+Supported (24 format IDs across 9 families):
+- **Rectangular Micro QR (rMQR):** all 32 sizes `R7x43` to `R17x139`, with automatic area-based selection.
+- **QR Code:** 40 versions, also for GS1 QR, GS1 Digital Link QR and HIBC QR.
+- **Micro QR Code:** M1, M2, M3, M4.
+- **Data Matrix:** 24 square sizes, 6 rectangular ECC 200 sizes, and 24 DMRE sizes, including applicable GS1, GS1 Digital Link and HIBC matrix wrappers.
+- **Aztec Code:** 1–32 layers for full Aztec (also HIBC), 1–4 for compact.
+- **PDF417:** 1–30 columns for standard, compact and HIBC. Row count remains automatically sized.
+- **MicroPDF417:** 34 permitted rows-by-columns size combinations, also HIBC.
+- **Code One:** A–H, T and T-16/32/48, S and S-10/20/30; S requires numeric content.
+- **Han Xin Code:** 84 versions.
+
+The menu is hidden for other formats that do not expose a verified discrete size selector. The encoder may refuse a manually selected size when the message does not fit; use Auto Select to recover. In particular Micro QR M1 and Code One S are data-type constrained.

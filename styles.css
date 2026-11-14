@@ -486,3 +486,9 @@ input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;height:17
 .caption-toggle{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:10px;margin-left:auto;white-space:nowrap;cursor:pointer}
 .caption-toggle input{width:14px;height:14px;accent-color:var(--accent)}
 .dynamic-field .dynamic-label{display:flex;gap:7px;justify-content:space-between;align-items:center}
+
+/* v1.6 — context-sensitive variation selector */
+.variation-field{margin-top:4px}
+.variation-field[hidden]{display:none!important}
+.variation-hint{margin:7px 0 0;color:var(--muted);font-size:11px;line-height:1.55}
+#variationSelect{width:100%;min-height:42px;cursor:pointer}
