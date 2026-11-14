@@ -1,6 +1,6 @@
 {
   "name": "aidc-generator",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "private": true,
   "description": "A404DC: QR image editing, human-readable labels, checkerboard transparency and demo inputs",
   "type": "module",

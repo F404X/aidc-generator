@@ -105,3 +105,7 @@ Logo images are reduced to 128–512 pixels before embedding directly into an SV
 QR Wi-Fi, contact, email and Pix templates provide pre-filled editable examples and independent **Show below QR** checkboxes for each field. Selected values are drawn below the QR using plain SVG text nodes, and are included in PNG/SVG exports. Example Pix uses the fictional city **Transilvania** and `sample@example.invalid`, which is not an actual payable key.
 
 The preview uses an adaptive white-gray checkerboard for transparency, and default 1D bar height is increased through the actual encoder, not by stretching output images. Specialist symbology fixtures may still require valid standard-specific input.
+
+## v1.5.1 – faster catalog thumbnails
+
+Catalog specimens are created once per symbology using the lightweight BWIPP SVG encoder at scale 1, then cached as tiny image object URLs. They no longer need PNG rasterization, canvas allocation or the styled QR engine. Rendering is lazy, with up to three simultaneous tasks and browser yielding between failed fixture attempts. Real examples were expanded for specialized postal, GS1, composite, HIBC and Swiss QR formats. An unsupported structured sample continues to be labeled honestly rather than replaced with a fictional barcode.
