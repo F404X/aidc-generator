@@ -19,7 +19,7 @@ export function overlayQrLogo(source, settings) {
  return new XMLSerializer().serializeToString(doc);
 }
 /** Preserve the square QR, then create a separate human-readable vector panel. */
-export function appendQrCaption(source,items=[]) {
+export function appendQrCaption(source,items=[],settings={}) {
  const lines=items.filter(item=>item?.label&&String(item.value??'').trim()).slice(0,10);
  if(!lines.length)return source;
  const doc=documentFor(source),root=doc.documentElement,[x,y,w,h]=coords(root);
@@ -29,12 +29,16 @@ export function appendQrCaption(source,items=[]) {
  root.setAttribute('width',String(w));root.setAttribute('height',String(h+captionH));
  root.setAttribute('preserveAspectRatio','xMidYMid meet');
  const g=shape(doc,'g',{'data-caption':'human-readable'});
- g.appendChild(shape(doc,'rect',{x,y:y+h,width:w,height:captionH,fill:'#FFFFFF'}));
- g.appendChild(shape(doc,'path',{d:'M '+x+' '+(y+h)+' h '+w,stroke:'#D9D9D1','stroke-width':1}));
- const heading=shape(doc,'text',{x:x+pad,y:y+h+pad+font,'font-family':'Arial, sans-serif','font-weight':700,'font-size':font,fill:'#222'});
+ const foreground=settings.foreground||'#19170E';
+ const background=settings.background||'#FFFFFF';
+ const fgOpacity=Math.max(0,Math.min(100,Number(settings.foregroundOpacity??100)))/100;
+ const bgOpacity=Math.max(0,Math.min(100,Number(settings.backgroundOpacity??100)))/100;
+ g.appendChild(shape(doc,'rect',{x,y:y+h,width:w,height:captionH,fill:background,'fill-opacity':bgOpacity}));
+ g.appendChild(shape(doc,'path',{d:'M '+x+' '+(y+h)+' h '+w,stroke:foreground,'stroke-opacity':fgOpacity*.3,'stroke-width':1}));
+ const heading=shape(doc,'text',{x:x+pad,y:y+h+pad+font,'font-family':'Arial, sans-serif','font-weight':700,'font-size':font,fill:foreground,'fill-opacity':fgOpacity});
  heading.textContent='DETAILS';g.appendChild(heading);
  for(let i=0;i<lines.length;i++){
-   const t=shape(doc,'text',{x:x+pad,y:y+h+pad+font+gap*(i+1.3),'font-family':'Arial, sans-serif','font-size':font,fill:'#222'});
+   const t=shape(doc,'text',{x:x+pad,y:y+h+pad+font+gap*(i+1.3),'font-family':'Arial, sans-serif','font-size':font,fill:foreground,'fill-opacity':fgOpacity});
    const key=shape(doc,'tspan',{'font-weight':700});key.textContent=String(lines[i].label).slice(0,32)+': ';
    const value=shape(doc,'tspan');const normalized=String(lines[i].value).replace(/\s+/g,' ').trim();
    value.textContent=normalized.length>63?normalized.slice(0,60)+'…':normalized;

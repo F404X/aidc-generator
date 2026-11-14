@@ -42,7 +42,7 @@ export async function renderCode(format, payload, settings, { preview = false } 
   // styling library fails. Do not silently discard an uploaded logo.
   try {
     await ensureEngine('qr');
-    return appendQrCaption(overlayQrLogo(await styledQr(text,settings,preview),settings),settings.captionItems);
+    return appendQrCaption(overlayQrLogo(await styledQr(text,settings,preview),settings),settings.captionItems,settings);
   } catch (error) {
     await ensureEngine('bwip');
     try {
@@ -52,7 +52,7 @@ export async function renderCode(format, payload, settings, { preview = false } 
         eclevel: settings.correction,
         barcolor: settings.foreground.slice(1),
         padding: Math.max(4, settings.margin),
-      })), settings), settings), settings.captionItems);
+      })), settings), settings), settings.captionItems,settings);
     } catch { throw error; }
   }
 }
