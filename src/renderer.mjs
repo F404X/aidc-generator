@@ -138,9 +138,15 @@ export async function svgToRaster(svg, mime = 'image/png', targetSize = 512, bac
   const doc = new DOMParser().parseFromString(svg, 'image/svg+xml');
   const root = doc.documentElement;
   const viewBox = root.getAttribute('viewBox')?.split(/[\s,]+/).map(Number);
-  const svgWidth = Number.parseFloat(root.getAttribute('width')) || viewBox?.[2] || targetSize;
-  const svgHeight = Number.parseFloat(root.getAttribute('height')) || viewBox?.[3] || targetSize;
+  // Use the barcode drawing geometry, not the outer SVG viewport dimensions.
+  const validBox = viewBox?.length === 4 && viewBox.every(Number.isFinite) && viewBox[2] > 0 && viewBox[3] > 0;
+  const svgWidth = validBox ? viewBox[2] : Number.parseFloat(root.getAttribute('width')) || targetSize;
+  const svgHeight = validBox ? viewBox[3] : Number.parseFloat(root.getAttribute('height')) || targetSize;
   if (![svgWidth, svgHeight].every(n => Number.isFinite(n) && n > 0)) throw new Error('Invalid SVG dimensions.');
+  // Never stretch the symbol even when the SVG has mismatched width/height.
+  root.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  root.setAttribute('width', String(svgWidth));
+  root.setAttribute('height', String(svgHeight));
   const ratio = Math.min(4096, targetSize) / Math.max(svgWidth, svgHeight);
   const width = Math.max(1, Math.round(svgWidth * ratio));
   const height = Math.max(1, Math.round(svgHeight * ratio));
@@ -153,7 +159,7 @@ export async function svgToRaster(svg, mime = 'image/png', targetSize = 512, bac
     context.fillStyle = '#ffffff';
     context.fillRect(0, 0, width, height);
   }
-  const url = URL.createObjectURL(svgBlob(svg));
+  const url = URL.createObjectURL(svgBlob(new XMLSerializer().serializeToString(doc)));
   try {
     const image = new Image();
     image.src = url;

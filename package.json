@@ -1,6 +1,6 @@
 {
   "name": "aidc-generator",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "description": "A404DC: AIDC barcode and QR generator with automatic rMQR sizing and full-width interface",
   "type": "module",

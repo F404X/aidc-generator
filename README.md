@@ -1,5 +1,13 @@
 # A404DC
 
+## v1.4.0: correct raster proportions and real format thumbnails
+
+- The main preview is a white square that never squashes the encoded shape; PNG output preserves the SVG `viewBox` aspect ratio.
+- The searchable format catalog and quick formats show actual thumbnails from the same encoder, generated on demand when visible.
+- A small, verified sample string appears alongside each successful thumbnail. Specialized formats with no valid example are labeled rather than illustrated with misleading placeholders.
+- The interface uses more rectangular surfaces and understated corners.
+
+
 A responsive, privacy-oriented AIDC barcode and QR code generator built with HTML, CSS, and native JavaScript modules. The interface uses **English** and the **charcoal + warm yellow** visual language of the [F404X portfolio](https://github.com/F404X/f404x-portfolio).
 
 ## Features

@@ -348,3 +348,120 @@ input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;height:17
 @media(max-width:1040px){.topbar{padding:0 22px}.workbench{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}.color-grid,.two-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:750px){.topbar{height:70px;gap:12px;padding:0 18px}.a404dc-logo{font-size:35px;letter-spacing:-2.8px}.logo-numerals{height:35px;font-size:12px;line-height:10px}.header-nav{gap:2px}.header-nav-link{padding:8px 9px;min-height:36px;font-size:11px}.header-nav-link svg{width:15px;height:15px}.header-github{margin-left:0;padding:10px}.header-github span,.header-github .tiny-arrow{display:none}.page-content{padding:30px 17px 24px}.workbench{grid-template-columns:minmax(0,1fr)}.preview-stage{height:380px}}
 @media(max-width:440px){.header-nav-link span{display:inline;font-size:10px}.header-nav-link svg{display:none}.header-nav-link{padding:8px 5px}.header-nav{gap:0}.a404dc-logo{font-size:31px}.logo-numerals{height:31px;font-size:11px;line-height:9px}.topbar{gap:4px}.header-github{padding:7px 9px}.preview-stage{height:320px}}
+
+
+/* v1.4 — barcode geometry, light preview paper and rectangular controls */
+:root { --radius: 4px; }
+.hero,.editor-panel,.preview-panel,.catalog-modal,
+.catalog-item,.quick-type,.catalog-trigger,.color-control,.upload-area,
+.export-primary,.export-secondary,.export-menu,.copy-buttons button,.batch-panel,
+.batch-download,.icon-btn,.filter-chip,.catalog-search input,.toast,.meta-pill,
+.header-nav-link,.header-github,.template-chip,.feature-grid article { border-radius:4px; }
+.catalog-item-icon,.upload-icon,.feature-icon { border-radius:3px; }
+
+/* A clean white square displays every symbology with its real proportions.
+   The transparency of exported files is NOT changed by the white paper. */
+.preview-stage {
+  width:100%;
+  height:auto !important;
+  min-height:0 !important;
+  aspect-ratio:1/1;
+  padding:clamp(14px,3vw,26px);
+  background:#fff;
+  border:1px solid #D8D9D5;
+  border-radius:4px;
+}
+.preview-stage .stage-grid { display:none; }
+.preview-stage .preview-corner { border-color:#9DA399; opacity:.55; }
+.preview-artboard,.preview-artboard.is-transparent,
+.preview-artboard.is-transparent:has(img:not([hidden])),
+.preview-artboard:has(img[hidden]) {
+  background:#fff!important;
+  box-shadow:none;
+  border-radius:0;
+}
+.preview-artboard img,#previewImage {
+  display:block;
+  width:100%;
+  height:100%;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  object-position:center;
+  aspect-ratio:auto;
+  filter:none;
+}
+.preview-empty { color:#60675B; }
+.preview-empty strong,.preview-error strong { color:#171A16; }
+.preview-empty .empty-icon { color:#796200;background:#FFF9E0;border-color:#E9DFB3; }
+.preview-error p { color:#545B55; }
+.preview-spinner { border-color:#D9D9D3; border-top-color:#977300; }
+
+/* Real, lazy-loaded barcode samples beside each format option. */
+.code-thumb {
+  flex:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  width:134px;
+  height:78px;
+  padding:7px;
+  background:#fff;
+  border:1px solid #D9D9D6;
+  border-radius:2px;
+  color:#626965;
+  font-size:10px;
+  font-weight:700;
+  text-align:center;
+}
+.code-thumb img {
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center;
+}
+.code-thumb.is-loading::after {
+  content:'';
+  width:22px;
+  height:22px;
+  border:2px solid #D4D3CE;
+  border-top-color:#B99B37;
+  border-radius:50%;
+  animation:spin .9s linear infinite;
+}
+.code-thumb.is-unavailable { background:#F0F1ED;color:#656962;padding:8px; }
+.quick-type { min-height:93px;padding:9px;gap:11px; }
+.quick-thumb { width:min(105px,48%);height:70px;padding:6px; }
+.quick-label { min-width:0;overflow-wrap:anywhere; }
+.catalog-modal { width:min(1030px,100%); }
+.catalog-results { gap:10px; }
+.catalog-item { min-height:103px;padding:9px;gap:11px;border-radius:4px; }
+.catalog-item-body small { -webkit-line-clamp:2; }
+.thumb-sample {
+  display:block;
+  min-height:13px;
+  margin-top:6px;
+  color:var(--accent);
+  font-size:10px;
+  font-family:ui-monospace,monospace;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+@media(max-width:960px){
+  .quick-thumb { width:80px;height:61px; }
+  .catalog-thumb { width:116px;height:74px; }
+}
+@media(max-width:540px){
+  .catalog-results { grid-template-columns:1fr; }
+  .catalog-thumb { width:126px;height:78px; }
+  .quick-type { min-height:96px;flex-direction:column;align-items:stretch;text-align:center;gap:7px; }
+  .quick-thumb { width:100%;height:65px; }
+  .quick-label { text-align:center; }
+}
+
+.quick-copy{display:flex;min-width:0;flex:1;flex-direction:column;gap:4px}
+.quick-copy .thumb-sample{color:var(--muted);margin-top:0;font-size:9px}
+@media(max-width:540px){.quick-copy{text-align:center;align-items:center;width:100%}.quick-copy .thumb-sample{max-width:100%}}

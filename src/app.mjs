@@ -1,8 +1,9 @@
-import { CATEGORIES, FORMATS, QUICK_IDS, lookupFormat, searchFormats } from './catalog.mjs?v=1.3.0';
-import { TEMPLATES, buildTemplate } from './payloads.mjs?v=1.3.0';
-import { renderCode, svgBlob, svgToRaster } from './renderer.mjs?v=1.3.0';
-import { ensureEngine, warmupEngines } from './engines.mjs?v=1.3.0';
-import { normalizeHex, contrastRatio, safeFilename, triggerDownload, nextFrame, debounce } from './utils.mjs?v=1.3.0';
+import { CATEGORIES, FORMATS, QUICK_IDS, lookupFormat, searchFormats } from './catalog.mjs?v=1.4.0';
+import { TEMPLATES, buildTemplate } from './payloads.mjs?v=1.4.0';
+import { renderCode, svgBlob, svgToRaster } from './renderer.mjs?v=1.4.0';
+import { ensureEngine, warmupEngines } from './engines.mjs?v=1.4.0';
+import { observeThumbnail, unobserveThumbnails } from './thumbnails.mjs?v=1.4.0';
+import { normalizeHex, contrastRatio, safeFilename, triggerDownload, nextFrame, debounce } from './utils.mjs?v=1.4.0';
 
 const $ = id => document.getElementById(id);
 const DEFAULTS = Object.freeze({foreground:'#19170E', background:'#FFFFFF', foregroundOpacity:100, backgroundOpacity:100, size:512, margin:16, dotStyle:'square', cornerStyle:'square', correction:'H', barHeight:18, showText:true, logo:null, logoSize:22});
@@ -184,12 +185,16 @@ function formatIcon(kind) {
 function quickButton(format) {
   const btn = el('button',`quick-type ${state.format.id === format.id ? 'is-active' : ''}`);
   btn.type='button'; btn.dataset.formatId = format.id;
-  const icon = el('span','quick-icon');icon.innerHTML = `<i data-lucide="${formatIcon(format.kind)}"></i>`;
-  btn.append(icon,el('span','quick-label',format.name));
+  const thumb = el('span','code-thumb quick-thumb is-loading');
+  const label = el('span','quick-copy');
+  label.append(el('span','quick-label',format.name),el('span','thumb-sample'));
+  btn.append(thumb,label);
+  observeThumbnail(thumb,format);
   btn.addEventListener('click',()=>selectFormat(format.id));
   return btn;
 }
 function renderQuickTypes() {
+  unobserveThumbnails($('quickTypes'));
   $('quickTypes').replaceChildren(...QUICK_IDS.map(id=>quickButton(lookupFormat(id))));
 
   icons();
@@ -336,14 +341,16 @@ function renderCatalog() {
   $('catalogResultCount').textContent=`${results.length} ${results.length === 1 ? 'format' : 'formats'} found`;
   const list = $('catalogResults');
   if (!results.length) {list.replaceChildren(el('p','no-results','No formats found. Try a different search.'));return;}
+  unobserveThumbnails(list);
   list.replaceChildren(...results.map(format => {
     const btn=el('button',`catalog-item ${format.id===state.format.id?'current':''}`);
     btn.type='button';
-    const icon=el('span','catalog-item-icon'); icon.innerHTML=`<i data-lucide="${formatIcon(format.kind)}"></i>`;
+    const thumb=el('span','code-thumb catalog-thumb is-loading');
     const body=el('span','catalog-item-body');
-    body.append(el('strong','',format.name),el('small','',format.hint));
+    body.append(el('strong','',format.name),el('small','',format.hint),el('span','thumb-sample'));
     const action=el('span','catalog-item-action'); action.innerHTML=`<i data-lucide="${format.id===state.format.id?'check':'arrow-up-right'}"></i>`;
-    btn.append(icon,body,action);
+    btn.append(thumb,body,action);
+    observeThumbnail(thumb,format);
     btn.addEventListener('click',()=>selectFormat(format.id));
     return btn;
   }));
