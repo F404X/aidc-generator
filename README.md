@@ -1,134 +1,142 @@
 # A404DC
 
-## v1.4.0: correct raster proportions and real format thumbnails
+**A browser-based workspace for creating, customizing, and exporting QR codes, barcodes, and other automatic identification symbols.**
 
-- The main preview is a white square that never squashes the encoded shape; PNG output preserves the SVG `viewBox` aspect ratio.
-- The searchable format catalog and quick formats show actual thumbnails from the same encoder, generated on demand when visible.
-- A small, verified sample string appears alongside each successful thumbnail. Specialized formats with no valid example are labeled rather than illustrated with misleading placeholders.
-- The interface uses more rectangular surfaces and understated corners.
+A404DC brings **110 symbologies** into one searchable interface—from everyday QR codes and retail barcodes to specialized formats used in logistics, industry, healthcare, and identification. Choose a format, enter your data, fine-tune its appearance, and download an image or vector file.
 
+**[Try A404DC in your browser](https://d0b3427e.aidc-generator.pages.dev/)** · [Explore the source code](https://github.com/F404X/aidc-generator)
 
-A responsive, privacy-oriented AIDC barcode and QR code generator built with HTML, CSS, and native JavaScript modules. The interface uses **English** and the **charcoal + warm yellow** visual language of the [F404X portfolio](https://github.com/F404X/f404x-portfolio).
+No account, server-side barcode generation, or installation is required to use the hosted app.
 
-## Features
+## What can you make?
 
-- Browse **110 barcode symbologies** through a searchable catalog, from QR, Data Matrix, Aztec, PDF417, Code 128 and EAN/UPC to specialist GS1, postal, and healthcare encoders.
-- A **blank editor on first load**. Every format has an informative placeholder and input hint, but no code is generated until the user supplies data.
-- QR Code styling: **square modules**, rounded modules, dots, several corner shapes, error-correction level, optional centered logo, and foreground/background colors.
-- **Live preview** after a short 55 ms debounce, with a smaller working preview for speed and a full-resolution vector regenerated on export.
-- Export **SVG, PNG, JPG, WEBP**, copy image or content, and generate **up to 60 codes at once in ZIP** (errors are included as a text file).
-- QR payload builders for URLs/text, Wi-Fi, vCard contacts, email, and Brazilian static Pix BR Code.
-- Data is encoded in the browser, never sent to an API. Library scripts and fonts are loaded from external CDNs; the CDN providers receive normal HTTP metadata, not the entered data.
+| Category | Examples | Typical uses |
+| --- | --- | --- |
+| **QR and 2D codes** | QR Code, Micro QR, rMQR, Data Matrix, Aztec, PDF417 | Links, digital information, labels, compact data |
+| **Retail barcodes** | EAN, UPC and related formats | Product identification |
+| **Linear barcodes** | Code 128, Code 39, ITF and other 1D formats | Inventory, assets, shipping |
+| **Industry and logistics** | GS1 and DataBar families, composite symbols | Product tracking and structured identification |
+| **Specialized formats** | Postal, healthcare/HIBC and other standards | Standards-specific workflows |
 
-**Important:** The catalog includes specialized standards that do **not** accept arbitrary text. Check digits, Application Identifiers, data lengths, and carrier or country specifications must be valid. Popular numeric GTIN/UPC formats include automatic Mod-10 check-digit calculation. For production labels and payments, validate results with the intended scanner or official application. The catalog is an encoder inventory, not a guarantee that every sample payload is standard-compliant.
+The **110-format library** is searchable, with compact sample images where the encoder can generate a valid specimen. Some specialist standards require structured data rather than arbitrary text.
+
+## Main features
+
+### Create and customize
+
+- **Live preview:** See the result as you enter or edit data, without stretching the symbol's original proportions.
+- **Searchable format catalog:** Find a symbology by name, category, or purpose.
+- **Color and transparency controls:** Set foreground and background colors independently, including opacity.
+- **QR design tools:** Customize module and finder-pattern shapes, error correction, and an optional center logo.
+- **Logo editor:** Resize an uploaded image, turn it black and white, adjust the threshold, and set the clear space around the logo.
+- **Barcode settings:** Adjust bar height and toggle human-readable text for compatible linear formats.
+
+### Choose the right variation
+
+Some formats can be generated in more than one size or configuration. For these, **Variation** appears directly under the symbology selector.
+
+- **Auto Select** is enabled by default and lets the encoder choose a suitable configuration.
+- When the chosen variation can be identified, its value appears in the disabled selector.
+- Turn off Auto Select to choose a supported version, size, number of layers, or column count manually.
+- If the selected variation cannot hold the supplied data, the generator reports an error rather than silently choosing another size.
+
+Variation controls are available for **24 catalog entries across nine families**, including **all 32 rMQR sizes**, QR versions 1–40, Micro QR M1–M4, Data Matrix sizes, Aztec layers, PDF417/MicroPDF417 configurations, Code One, and Han Xin. Related GS1 and HIBC variants are covered where applicable.
+
+### Build useful QR content
+
+A404DC includes dedicated forms for common QR tasks, so you do not need to construct the underlying payload manually:
+
+| QR template | What it creates |
+| --- | --- |
+| **Text / URL** | A QR code containing text or a web address |
+| **Wi-Fi** | Network name, security settings, and optional password |
+| **Contact** | A vCard containing contact details |
+| **Email** | An email link with optional subject and body |
+| **Pix (Brazil)** | A static Pix BR Code payload with optional amount and description |
+
+For structured templates, individual field values can optionally be **displayed below the QR code**. These captions are off by default and are included in supported image/vector exports when enabled.
+
+### Export or generate in bulk
+
+| Output | Notes |
+| --- | --- |
+| **SVG** | Scalable vector output, suitable for further design work |
+| **PNG** | Raster image with transparency support |
+| **WEBP** | Raster image with transparency support |
+| **JPG** | Raster image with an opaque background |
+| **Clipboard** | Copy the image or its encoded content |
+| **Batch ZIP** | Generate up to **60 PNG codes** from separate lines of text |
+
+Batch generation uses the selected symbology and current appearance settings. Each line is treated as a separate raw payload; batch mode does not fill in the structured QR template forms.
+
+## Get started
+
+1. **Open [A404DC](https://d0b3427e.aidc-generator.pages.dev/)** in a modern browser.
+2. **Choose a symbology** from the quick options or searchable catalog.
+3. **Enter or edit the content.** The preview updates as you type.
+4. **Customize** the colors, size, variation, and supported format-specific options.
+5. **Download** the result as PNG, SVG, JPG, or WEBP—or copy it to your clipboard.
+
+For multiple codes, open **Batch mode**, enter one value per line, and download the resulting ZIP archive.
+
+## Privacy and how it works
+
+**Barcode content is processed locally in your browser.** The site generates symbols client-side; it does not require an account, database, or barcode-generation API, and the entered content is not submitted to a generation server.
+
+The application downloads JavaScript libraries, fonts, and other static resources from third-party CDNs. Those providers can receive normal network request metadata, but not your barcode input as an API payload. Initial loading therefore requires an internet connection.
+
+A404DC is a static web app built with **HTML, CSS, and JavaScript ES modules**, using:
+
+- [bwip-js](https://github.com/metafloor/bwip-js) for barcode symbologies
+- [qr-code-styling](https://github.com/kozakdenys/qr-code-styling) for styled QR codes
+- [JSZip](https://stuk.github.io/jszip/) for batch downloads
+- [Lucide](https://lucide.dev/) for interface icons
 
 ## Run locally
 
-Requirements: Node.js 18 or newer.
+**Requirements:** [Node.js](https://nodejs.org/) 18 or newer, plus an internet connection to load the browser-side libraries.
 
-```bash
+~~~bash
+git clone https://github.com/F404X/aidc-generator.git
+cd aidc-generator
 npm run dev
-```
+~~~
 
-Open `http://localhost:4173` (default). This is a **static** site; no build system, backend, or database is required. Avoid opening `index.html` via `file://` because some browsers block ES modules there.
+Open **http://localhost:4173**.
 
-## Tests
+A404DC has no production build step, backend, or database. Use its local HTTP server rather than opening the HTML file directly through a file URL, since browsers can restrict ES module loading from local files.
 
-```bash
+### Checks and tests
+
+~~~bash
+npm install
 npm run check
 npm test
-```
+~~~
 
-Tests cover payload builders, validation, catalog and utilities. Browser interaction tests require a running browser. Since the encoder libraries are downloaded from CDNs, an internet connection is required for first-time use. If a CDN is blocked, the app tries alternate providers and shows a clear loading error.
+For a broader encoding audit of the catalog:
 
-## Deployment
+~~~bash
+npm run audit:engine
+~~~
 
-**GitHub Pages:** Repository **Settings → Pages → Deploy from a branch → `main` → `/(root)`**. The expected address is `https://f404x.github.io/aidc-generator/` once deployment completes.
+The full encoder audit produces a JSON report in the project root. It may report failures for specialist formats whose sample data does not satisfy the required standards; a passing general test suite is not certification of every encoded standard.
 
-**Cloudflare Pages:** Connect the GitHub repository, use no build command and set output directory to `.`. The `_headers` file applies CSP and privacy-related headers on Cloudflare Pages.
+## Important limitations
 
-## Shortcuts
+- **A404DC generates codes; it is not a barcode scanner or decoder.**
+- **Valid content matters.** Formats such as GS1, postal, healthcare, and retail codes may require specific lengths, checksums, identifiers, or structured fields. Not every format accepts arbitrary text.
+- **Test before production use.** Scanner compatibility depends on the symbology, payload, dimensions, colors, physical printing, and the target device.
+- **Pix is static.** The Pix template constructs a BR Code payload; it does not verify a payment request or recipient against a bank. Verify all payment details in a trusted banking app.
+- **QR logos and low contrast affect readability.** Larger logos, transparency, and unusual colors can make a code harder to scan.
+- **Clipboard support varies by browser.** Copying images generally requires HTTPS or localhost.
 
-- `/` — Open format catalog (outside editor controls).
-- `Ctrl/Cmd + Enter` — Generate current preview.
-- `Ctrl/Cmd + S` — Download PNG.
-- `Esc` — Close catalog or export menu.
+## Contributing
 
-## Limitations and privacy
+Bug reports, suggestions, and contributions are welcome through [GitHub Issues](https://github.com/F404X/aidc-generator/issues) and [Pull Requests](https://github.com/F404X/aidc-generator/pulls).
 
-- Centered logo support applies to **regular QR Codes** only. Error correction is raised to H with a logo. Very large logos or low-contrast colors can still make a code unreadable.
-- Static Pix QR payloads are **not verified dynamic payment charges**. Verify recipient and amount before paying.
-- Image clipboard access requires HTTPS or localhost and browser Clipboard API support.
-- The ZIP exporter handles raw data lines; it does not interpret the structured QR form templates in batch mode.
-- The fonts and libraries are third-party resources loaded from pinned CDN versions; an offline build would need local, separately licensed vendor files.
+## License
 
-## Architecture
+Released under the [MIT License](LICENSE). Third-party libraries retain their respective licenses.
 
-```text
-index.html                 UI shell
-styles.css                 charcoal/yellow responsive theme
-src/app.mjs                editor, live preview, exports, catalog, batch
-src/catalog.mjs            searchable symbology catalog
-src/renderer.mjs           SVG rendering, sanitization, raster exports
-src/engines.mjs            encoder initialization and CDN fallbacks
-src/validation.mjs         basic standard input checks and Mod-10
-src/payloads.mjs           QR content templates and Pix CRC16
-src/utils.mjs              shared helpers
-scripts/serve.mjs          minimal local development server
-tests/payloads.test.mjs    automated tests
-```
-
-Libraries: [bwip-js 4.11.4](https://github.com/metafloor/bwip-js) (barcode encoders), [qr-code-styling 1.9.2](https://github.com/kozakdenys/qr-code-styling) (custom QR), [JSZip 3.10.1](https://stuk.github.io/jszip/), and [Lucide](https://lucide.dev/) icons. Each external dependency has its own license. This project is MIT licensed.
-
-
-## v1.2 — Full-size PNG live preview and opacity controls
-
-- Every supported format is previewed as a **PNG raster**, scaled to the available preview frame without stretching its geometry.
-- The export pipeline remains SVG-first for crisp final SVG, PNG, JPEG and WEBP downloads.
-- Independent **foreground opacity** and **background opacity** sliders (0–100%). PNG, WEBP and SVG retain transparency. JPEG is composited on white because it does not support an alpha channel.
-- The preview uses a checkerboard backdrop to make transparent areas recognizable.
-- Preview is rerasterized on resize without re-encoding the barcode.
-- Extremely wide barcodes may appear shorter than the preview frame to avoid distorting widths or scanner readability.
-
-## rMQR automatic sizing
-
-The rMQR encoder requires an explicit version (R7x43 through R17x139) with M or H error correction. A404DC tries the 32 valid sizes by increasing area, selecting the first that can hold the payload.
-
-## Verifying all formats
-
-Run `npm test` to check the catalog and rMQR option profiles. Run `npm run audit:engine` with the pinned bwip-js npm package installed to encode example data for all 110 formats, producing `catalog-audit-report.json`. Some specialized formats require full standard-specific data and may be reported as needing a test fixture rather than a false positive.
-
-## 1.5 features
-
-Logo images are reduced to 128–512 pixels before embedding directly into an SVG, avoiding third-party async image-loading stalls. Use the collapsed **Edit Image** panel to change QR footprint (8–28% of width), black/white threshold, clear zone and downsample resolution. This affects only QR Code.
-
-QR Wi-Fi, contact, email and Pix templates provide pre-filled editable examples and independent **Show below QR** checkboxes for each field. Selected values are drawn below the QR using plain SVG text nodes, and are included in PNG/SVG exports. Example Pix uses the fictional city **Transilvania** and `sample@example.invalid`, which is not an actual payable key.
-
-The preview uses an adaptive white-gray checkerboard for transparency, and default 1D bar height is increased through the actual encoder, not by stretching output images. Specialist symbology fixtures may still require valid standard-specific input.
-
-## v1.5.1 – faster catalog thumbnails
-
-Catalog specimens are created once per symbology using the lightweight BWIPP SVG encoder at scale 1, then cached as tiny image object URLs. They no longer need PNG rasterization, canvas allocation or the styled QR engine. Rendering is lazy, with up to three simultaneous tasks and browser yielding between failed fixture attempts. Real examples were expanded for specialized postal, GS1, composite, HIBC and Swiss QR formats. An unsupported structured sample continues to be labeled honestly rather than replaced with a fictional barcode.
-
-## v1.6 — Variation / Auto Select
-
-An adaptive **Variation** field appears on formats that expose symbol-size, version, layer, or column controls. **Auto Select** is the default for every supported format; fixed versions are validated, encoded without silent substitution and may fail when the selected geometry cannot contain the input. Variation selections are remembered independently for each format and carried into PNG, SVG, WEBP, JPEG, copied images and batch ZIP exports.
-
-Supported (24 format IDs across 9 families):
-- **Rectangular Micro QR (rMQR):** all 32 sizes `R7x43` to `R17x139`, with automatic area-based selection.
-- **QR Code:** 40 versions, also for GS1 QR, GS1 Digital Link QR and HIBC QR.
-- **Micro QR Code:** M1, M2, M3, M4.
-- **Data Matrix:** 24 square sizes, 6 rectangular ECC 200 sizes, and 24 DMRE sizes, including applicable GS1, GS1 Digital Link and HIBC matrix wrappers.
-- **Aztec Code:** 1–32 layers for full Aztec (also HIBC), 1–4 for compact.
-- **PDF417:** 1–30 columns for standard, compact and HIBC. Row count remains automatically sized.
-- **MicroPDF417:** 34 permitted rows-by-columns size combinations, also HIBC.
-- **Code One:** A–H, T and T-16/32/48, S and S-10/20/30; S requires numeric content.
-- **Han Xin Code:** 84 versions.
-
-The menu is hidden for other formats that do not expose a verified discrete size selector. The encoder may refuse a manually selected size when the message does not fit; use Auto Select to recover. In particular Micro QR M1 and Code One S are data-type constrained.
-
-## v1.6.1 — automatic variation feedback and continuous typing
-
-The **Variation** control is now directly below the Symbology selector. **Auto Select** is a separate checkbox (checked by default); it disables manual selection while the adjacent dropdown tracks the version actually generated. QR Code obtains its version from the styled encoder's module count; rMQR reports the exact successful fixed size, and other BWIPP symbologies attempt to match the automatically generated symbol to known fixed-size geometry. If no reliable match is available, the dropdown explicitly says the automatic version was not reported, instead of showing an inaccurate choice. Unchecking Auto Select adopts the last detected size when possible and enables manual control.
-
-The Code content field continues listening to browser `input` events for every repeated keystroke. A trailing debounce with a maximum wait of 170 ms ensures previews refresh during a long held key, without encoding at every individual repeat. Existing image resolution and exports remain unchanged.
+**Created by [F404X](https://github.com/F404X).**
