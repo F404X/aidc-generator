@@ -323,3 +323,28 @@ input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;height:17
 .empty-icon svg{width:26px;height:26px}
 #previewImage{transition:opacity .08s ease}
 @media (prefers-reduced-motion:reduce){.quick-type,.catalog-trigger,.export-primary,.export-secondary,.batch-download,.side-link,.icon-btn,#previewImage{transition:none!important}}
+
+/* A404DC: full-width header; vertical 404 replaces the I of AIDC. */
+.app-shell{display:block;min-height:100vh}
+.main-shell{width:100%;min-width:0;max-width:none}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:32px;padding:0 max(26px,calc((100vw - 1480px)/2));height:82px;background:#10110ff2;backdrop-filter:blur(15px);border-bottom:1px solid var(--line)}
+.a404dc-logo{display:inline-flex;align-items:center;gap:2px;white-space:nowrap;font:700 43px/.92 'Space Grotesk',sans-serif;letter-spacing:-3px;color:var(--text);flex:none;padding:6px 0}
+.a404dc-logo:hover{color:var(--text)}
+.logo-numerals{height:43px;display:flex;flex-direction:column;justify-content:space-around;align-items:center;color:var(--accent);font:800 15px/12px 'Space Grotesk',sans-serif;letter-spacing:-.8px;margin:0 2px}
+.logo-numerals span{display:block}
+.logo-dc{letter-spacing:-3.6px}
+.header-nav{margin-left:auto;display:flex;align-items:center;gap:8px}
+.header-nav-link{display:inline-flex;align-items:center;gap:9px;min-height:41px;padding:0 17px;border:1px solid transparent;border-radius:5px;background:transparent;color:var(--muted);font-size:13px;font-weight:650;text-decoration:none}
+.header-nav-link:hover,.header-nav-link:focus-visible{color:var(--accent);border-color:var(--line);background:var(--panel)}
+.header-nav-link.active{color:var(--accent)}
+.header-nav-link svg{width:16px;height:16px}
+.header-github{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-weight:700;color:var(--text);margin-left:12px}
+.header-github:hover{color:var(--accent);border-color:var(--accent)}
+.header-github svg{width:16px;height:16px}
+.header-github .tiny-arrow{width:12px;height:12px}
+.page-content{width:min(1528px,100%);margin:0 auto;padding:40px clamp(18px,3vw,48px) 24px}
+.workbench{grid-template-columns:minmax(340px,1fr) minmax(390px,1.18fr)}
+@media(min-width:1350px){.preview-stage{height:clamp(400px,38vw,530px)}}
+@media(max-width:1040px){.topbar{padding:0 22px}.workbench{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}.color-grid,.two-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:750px){.topbar{height:70px;gap:12px;padding:0 18px}.a404dc-logo{font-size:35px;letter-spacing:-2.8px}.logo-numerals{height:35px;font-size:12px;line-height:10px}.header-nav{gap:2px}.header-nav-link{padding:8px 9px;min-height:36px;font-size:11px}.header-nav-link svg{width:15px;height:15px}.header-github{margin-left:0;padding:10px}.header-github span,.header-github .tiny-arrow{display:none}.page-content{padding:30px 17px 24px}.workbench{grid-template-columns:minmax(0,1fr)}.preview-stage{height:380px}}
+@media(max-width:440px){.header-nav-link span{display:inline;font-size:10px}.header-nav-link svg{display:none}.header-nav-link{padding:8px 5px}.header-nav{gap:0}.a404dc-logo{font-size:31px}.logo-numerals{height:31px;font-size:11px;line-height:9px}.topbar{gap:4px}.header-github{padding:7px 9px}.preview-stage{height:320px}}

@@ -1,12 +1,13 @@
 /** Client-only barcode renderers. Encoder libraries are fetched, barcode payloads are not. */
-import { ensureEngine } from './engines.mjs?v=1.2.0';
-import { prepareBarcodePayload } from './validation.mjs?v=1.2.0';
+import { ensureEngine } from './engines.mjs?v=1.3.0';
+import { prepareBarcodePayload } from './validation.mjs?v=1.3.0';
+import { encodeRmqr, REQUIRED_OPTIONS } from './symbology-options.mjs?v=1.3.0';
 
 const SVG_MIME = 'image/svg+xml;charset=utf-8';
 function drawBwip(format, text, settings, preview) {
   const scale = preview ? 2 : Math.max(2, Math.min(6, Math.round(settings.size / 170)));
   const margin = preview ? Math.round(settings.margin * 320 / settings.size) : settings.margin;
-  return window.bwipjs.toSVG({
+  const options = {
     bcid: format.id,
     text,
     scale,
@@ -18,7 +19,11 @@ function drawBwip(format, text, settings, preview) {
     barcolor: settings.foreground.slice(1),
     paddingwidth: margin,
     paddingheight: margin,
-  });
+    ...(REQUIRED_OPTIONS[format.id] || {}),
+  };
+  return format.id === 'rectangularmicroqrcode'
+    ? encodeRmqr(options => window.bwipjs.toSVG(options), options)
+    : window.bwipjs.toSVG(options);
 }
 
 export async function renderCode(format, payload, settings, { preview = false } = {}) {

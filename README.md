@@ -1,4 +1,4 @@
-# AIDC Studio
+# A404DC
 
 A responsive, privacy-oriented AIDC barcode and QR code generator built with HTML, CSS, and native JavaScript modules. The interface uses **English** and the **charcoal + warm yellow** visual language of the [F404X portfolio](https://github.com/F404X/f404x-portfolio).
 
@@ -81,3 +81,11 @@ Libraries: [bwip-js 4.11.4](https://github.com/metafloor/bwip-js) (barcode encod
 - The preview uses a checkerboard backdrop to make transparent areas recognizable.
 - Preview is rerasterized on resize without re-encoding the barcode.
 - Extremely wide barcodes may appear shorter than the preview frame to avoid distorting widths or scanner readability.
+
+## rMQR automatic sizing
+
+The rMQR encoder requires an explicit version (R7x43 through R17x139) with M or H error correction. A404DC tries the 32 valid sizes by increasing area, selecting the first that can hold the payload.
+
+## Verifying all formats
+
+Run `npm test` to check the catalog and rMQR option profiles. Run `npm run audit:engine` with the pinned bwip-js npm package installed to encode example data for all 110 formats, producing `catalog-audit-report.json`. Some specialized formats require full standard-specific data and may be reported as needing a test fixture rather than a false positive.

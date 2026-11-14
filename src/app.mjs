@@ -1,8 +1,8 @@
-import { CATEGORIES, FORMATS, QUICK_IDS, SIDEBAR_IDS, lookupFormat, searchFormats } from './catalog.mjs?v=1.2.0';
-import { TEMPLATES, buildTemplate } from './payloads.mjs?v=1.2.0';
-import { renderCode, svgBlob, svgToRaster } from './renderer.mjs?v=1.2.0';
-import { ensureEngine, warmupEngines } from './engines.mjs?v=1.2.0';
-import { normalizeHex, contrastRatio, safeFilename, triggerDownload, nextFrame, debounce } from './utils.mjs?v=1.2.0';
+import { CATEGORIES, FORMATS, QUICK_IDS, lookupFormat, searchFormats } from './catalog.mjs?v=1.3.0';
+import { TEMPLATES, buildTemplate } from './payloads.mjs?v=1.3.0';
+import { renderCode, svgBlob, svgToRaster } from './renderer.mjs?v=1.3.0';
+import { ensureEngine, warmupEngines } from './engines.mjs?v=1.3.0';
+import { normalizeHex, contrastRatio, safeFilename, triggerDownload, nextFrame, debounce } from './utils.mjs?v=1.3.0';
 
 const $ = id => document.getElementById(id);
 const DEFAULTS = Object.freeze({foreground:'#19170E', background:'#FFFFFF', foregroundOpacity:100, backgroundOpacity:100, size:512, margin:16, dotStyle:'square', cornerStyle:'square', correction:'H', barHeight:18, showText:true, logo:null, logoSize:22});
@@ -61,7 +61,7 @@ function syncContrast() {
   } else {
     note.textContent = 'PNG, JPG, WEBP or SVG. SVG is resolution-independent.';
     note.classList.remove('warning-text');
-    if (state.svg) {badge.classList.remove('warning'); badge.textContent = 'Ready';}
+    if (state.svg) {badge.classList.remove('warning'); badge.textContent = 'Generated';}
   }
 }
 function clearPreview() {
@@ -191,15 +191,7 @@ function quickButton(format) {
 }
 function renderQuickTypes() {
   $('quickTypes').replaceChildren(...QUICK_IDS.map(id=>quickButton(lookupFormat(id))));
-  $('sideFormats').replaceChildren(...SIDEBAR_IDS.map(id=> {
-    const f = lookupFormat(id);
-    const btn = el('button',`side-format ${state.format.id === id ? 'is-active' : ''}`);
-    btn.type = 'button'; btn.dataset.formatId = id;
-    btn.innerHTML = `<i data-lucide="${formatIcon(f.kind)}"></i><span></span><i data-lucide="arrow-up-right" class="side-format-arrow"></i>`;
-    btn.querySelector('span').textContent = f.name;
-    btn.addEventListener('click',()=>selectFormat(id));
-    return btn;
-  }));
+
   icons();
 }
 function selectFormat(id) {
