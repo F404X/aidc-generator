@@ -17,12 +17,21 @@ let busy = 0;
 let observer;
 
 export function thumbnailSamples(format) {
-  const example = String(format.example || '').trim();
-  if (!example || /^(Swiss payment|Structured |GS1 coupon data|BWIPP raw patterns)/i.test(example)) return [];
-  const fallbacks = format.kind === 'matrix'
-    ? ['HELLO','123','123456']
-    : ['123456','12345678','ABC123','HELLO'];
-  return [...new Set([example,...fallbacks])];
+ const example=String(format.example||'').trim();
+ const specialized=/^(Swiss payment|Structured |GS1 coupon data|BWIPP raw patterns)/i.test(example);
+ const samples={
+  maxicode:['1234567890','12345678901234567890'],
+  raw:['1010101010','1111000011110000'],
+  mailmark:['JGB 012100123412345678XY1A 0','12345678901234567890'],
+  auspost:['5956439111ABA 9','5956439111'],
+  gs1northamericancoupon:['(8110)10614141123456(3900)001000'],
+  swissqrcode:['SPC\\n0200\\n1\\nCH4431999123000889012\\nS\\nSAMPLE AG\\nMain Street 1\\n8000\\nZURICH\\nCH\\n\\n\\n\\n\\n\\n\\n25.00\\nCHF\\nS\\nDEMO USER\\nMain Street 1\\n8000\\nZURICH\\nCH\\nNON\\n\\nEPD'],
+ };
+ const fallback=format.kind==='matrix'?['HELLO','123','123456789','BATCH-001']:['123456','12345678','123456789012','ABC123','A123456B'];
+ if(format.category==='gs1')fallback.unshift('(01)09506000134352','09506000134352','(01)09506000134352(10)BATCH');
+ if(format.category==='postal')fallback.unshift('12345678901','123456789','1234567-890');
+ if(format.category==='health')fallback.unshift('+A123BJC5D6E','12345678');
+ return [...new Set([...(specialized?[]:[example]),...(samples[format.id]||[]),...fallback].filter(Boolean))];
 }
 async function encodeThumb(format) {
   for (const sample of thumbnailSamples(format)) {
@@ -56,7 +65,7 @@ function show(frame, format) {
     const label = frame.parentElement?.querySelector('.thumb-sample');
     if (!url) {
       frame.classList.add('is-unavailable');
-      frame.textContent = 'No sample';
+      frame.textContent = 'Special input';
       frame.title = 'A standards-compliant example is not yet available';
       if (label) label.textContent = 'Special input required';
       return;

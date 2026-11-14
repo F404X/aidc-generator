@@ -465,3 +465,24 @@ input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;height:17
 .quick-copy{display:flex;min-width:0;flex:1;flex-direction:column;gap:4px}
 .quick-copy .thumb-sample{color:var(--muted);margin-top:0;font-size:9px}
 @media(max-width:540px){.quick-copy{text-align:center;align-items:center;width:100%}.quick-copy .thumb-sample{max-width:100%}}
+
+/* A404DC v1.5: reliable, non-stretched preview over variable-strength checkerboard. */
+#previewStage{background:repeating-conic-gradient(#fff 0% 25%,rgba(80,85,80,var(--checker-strength,.06)) 0% 50%) 50%/24px 24px!important}
+#previewArtboard,#previewArtboard.is-transparent,#previewArtboard:has(img[hidden]){background:transparent!important;box-shadow:none!important}
+#previewImage{display:block!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;aspect-ratio:auto!important}
+#previewImage[hidden]{display:none!important}
+.logo-editor{background:#202320;border:1px solid var(--line);border-radius:4px;margin-top:10px}
+.logo-editor summary{list-style:none;cursor:pointer;color:var(--text);font-size:12px;font-weight:700;padding:13px 14px;display:flex;justify-content:space-between;align-items:center}
+.logo-editor summary::-webkit-details-marker{display:none}
+.logo-editor[open] summary svg{transform:rotate(180deg)}
+.logo-editor-body{padding:0 14px 15px;display:grid;gap:10px}
+.logo-settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)}
+.logo-settings-row output{color:var(--accent);font-weight:700}
+.logo-settings-row select{background:#252925;color:var(--text);padding:7px 10px;border-radius:3px;border:1px solid var(--line)}
+.logo-editor input[type=range]{width:100%;accent-color:var(--accent)}
+.logo-help{font-size:11px;line-height:1.5;color:var(--muted);margin:0}
+.logo-check{display:flex;gap:10px;align-items:center;font-size:12px}
+.logo-check input{accent-color:var(--accent)}
+.caption-toggle{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:10px;margin-left:auto;white-space:nowrap;cursor:pointer}
+.caption-toggle input{width:14px;height:14px;accent-color:var(--accent)}
+.dynamic-field .dynamic-label{display:flex;gap:7px;justify-content:space-between;align-items:center}

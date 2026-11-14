@@ -2,6 +2,7 @@
 import { ensureEngine } from './engines.mjs?v=1.3.0';
 import { prepareBarcodePayload } from './validation.mjs?v=1.3.0';
 import { encodeRmqr, REQUIRED_OPTIONS } from './symbology-options.mjs?v=1.3.0';
+import {overlayQrLogo,appendQrCaption} from './qr-extensions.mjs?v=1.5.0';
 
 const SVG_MIME = 'image/svg+xml;charset=utf-8';
 function drawBwip(format, text, settings, preview) {
@@ -11,7 +12,7 @@ function drawBwip(format, text, settings, preview) {
     bcid: format.id,
     text,
     scale,
-    height: settings.barHeight,
+    ...(format.kind === 'linear' ? {height:settings.barHeight} : {}),
     includetext: format.kind === 'linear' && settings.showText,
     textxalign: 'center',
     textcolor: settings.foreground.slice(1),
@@ -20,6 +21,7 @@ function drawBwip(format, text, settings, preview) {
     paddingwidth: margin,
     paddingheight: margin,
     ...(REQUIRED_OPTIONS[format.id] || {}),
+    ...(['datamatrix','gs1datamatrix','hibcdatamatrix'].includes(format.id)?{format:'square'}:{}),
   };
   return format.id === 'rectangularmicroqrcode'
     ? encodeRmqr(options => window.bwipjs.toSVG(options), options)
@@ -40,18 +42,18 @@ export async function renderCode(format, payload, settings, { preview = false } 
   // styling library fails. Do not silently discard an uploaded logo.
   try {
     await ensureEngine('qr');
-    return await styledQr(text, settings, preview);
+    return appendQrCaption(overlayQrLogo(await styledQr(text,settings,preview),settings),settings.captionItems);
   } catch (error) {
     if (settings.logo) throw error;
     await ensureEngine('bwip');
     try {
-      return applyBarcodeOpacity(sanitizeSvg(window.bwipjs.toSVG({
+      return appendQrCaption(applyBarcodeOpacity(sanitizeSvg(window.bwipjs.toSVG({
         bcid: 'qrcode', text,
         scale: preview ? 3 : Math.max(3, Math.round(settings.size / 100)),
         eclevel: settings.correction,
         barcolor: settings.foreground.slice(1),
         padding: Math.max(4, settings.margin),
-      })), settings);
+      })), settings), settings.captionItems);
     } catch { throw error; }
   }
 }
@@ -61,21 +63,15 @@ async function styledQr(data, settings, preview) {
   const margin = preview ? Math.round(settings.margin * size / settings.size) : settings.margin;
   const qr = new window.QRCodeStyling({
     width: size, height: size, type: 'svg', data, margin,
-    image: settings.logo || undefined,
+    // The preprocessed logo is embedded into the final SVG, without async QR image-loading.
     qrOptions: { typeNumber: 0, errorCorrectionLevel: settings.logo ? 'H' : settings.correction },
-    imageOptions: {
-      hideBackgroundDots: true,
-      imageSize: settings.logoSize / 100,
-      margin: Math.max(2, Math.round(size * 0.008)),
-      saveAsBlob: true,
-    },
     dotsOptions: { type: settings.dotStyle, color: rgbaColor(settings.foreground, settings.foregroundOpacity) },
     cornersSquareOptions: { type: settings.cornerStyle, color: rgbaColor(settings.foreground, settings.foregroundOpacity) },
     cornersDotOptions: { type: settings.cornerStyle === 'square' ? 'square' : 'dot', color: rgbaColor(settings.foreground, settings.foregroundOpacity) },
     backgroundOptions: { color: rgbaColor(settings.background, settings.backgroundOpacity) },
   });
   try {
-    const blob = await qr.getRawData('svg');
+    const blob = await Promise.race([qr.getRawData('svg'), new Promise((_,reject)=>setTimeout(()=>reject(new Error('QR generation timed out. Please retry.')),8000))]);
     if (!blob) throw new Error('Could not generate SVG.');
     const svg = await blob.text();
     return sanitizeSvg(svg);
@@ -163,7 +159,7 @@ export async function svgToRaster(svg, mime = 'image/png', targetSize = 512, bac
   try {
     const image = new Image();
     image.src = url;
-    await image.decode();
+    await Promise.race([image.decode(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Image preview timed out.')),8000))]);
     context.drawImage(image, 0, 0, width, height);
   } finally { URL.revokeObjectURL(url); }
   const blob = await new Promise((resolve, reject) => {
