@@ -8,6 +8,14 @@ A404DC brings **110 symbologies** into one searchable interface—from everyday 
 
 No account, server-side barcode generation, or installation is required to use the hosted app.
 
+## Create your first code
+
+1. Open A404DC and select **QR Code** in the **Symbology** menu.
+2. Enter `https://example.com` in **Code content**. The preview updates as you type.
+3. Click **Download PNG** and scan the image with your phone to open the link.
+
+To make an inventory label, select **Code 128** and try `ITEM-001`. For a design or print layout, export as **SVG** to resize the code without losing sharpness.
+
 ## What can you make?
 
 | Category | Examples | Typical uses |
@@ -68,16 +76,6 @@ For structured templates, individual field values can optionally be **displayed 
 | **Batch ZIP** | Generate up to **60 PNG codes** from separate lines of text |
 
 Batch generation uses the selected symbology and current appearance settings. Each line is treated as a separate raw payload; batch mode does not fill in the structured QR template forms.
-
-## Get started
-
-1. **Open [A404DC](https://d0b3427e.aidc-generator.pages.dev/)** in a modern browser.
-2. **Choose a symbology** from the quick options or searchable catalog.
-3. **Enter or edit the content.** The preview updates as you type.
-4. **Customize** the colors, size, variation, and supported format-specific options.
-5. **Download** the result as PNG, SVG, JPG, or WEBP—or copy it to your clipboard.
-
-For multiple codes, open **Batch mode**, enter one value per line, and download the resulting ZIP archive.
 
 ## Privacy and how it works
 
