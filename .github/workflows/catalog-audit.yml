@@ -22,6 +22,8 @@ jobs:
         run: node --test tests/payloads.test.mjs
       - name: Test rMQR and catalog
         run: node --test tests/symbology-options.test.mjs
+      - name: Test thumbnail sample selection
+        run: node --test tests/thumbnails.test.mjs
       - name: Test all 110 formats with real bwip-js
         run: npm run audit:engine
       - uses: actions/upload-artifact@v4

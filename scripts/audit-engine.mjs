@@ -1,30 +1,48 @@
-/** Audit all A404DC catalog IDs against the actual pinned bwip-js encoder. */
+/** Encode the *same examples* used by the lazy catalog thumbnails with the real bwip-js engine. */
 import {writeFile,appendFile} from 'node:fs/promises';
 import bwipjs from 'bwip-js';
 import {FORMATS} from '../src/catalog.mjs';
+import {thumbnailSamples} from '../src/thumbnails.mjs';
 import {prepareBarcodePayload} from '../src/validation.mjs';
-import {encodeRmqr,REQUIRED_OPTIONS} from '../src/symbology-options.mjs';
+import {REQUIRED_OPTIONS} from '../src/symbology-options.mjs';
+
 const results=[];
 for(const format of FORMATS){
- const sample=format.example;
- if(!sample || /^(Structured |Swiss payment fields|GS1 coupon data|BWIPP raw patterns)/i.test(sample)){
-   results.push({id:format.id,status:'NEEDS_FIXTURE',sample,detail:'A standards-compliant structured test record is needed'});
-   continue;
- }
- try{
-  const text=prepareBarcodePayload(format,sample);
-  const options={bcid:format.id,text,scale:2,height:14,...(REQUIRED_OPTIONS[format.id]||{})};
-  const svg=format.id==='rectangularmicroqrcode' ? encodeRmqr(o=>bwipjs.toSVG(o),options) : bwipjs.toSVG(options);
-  if(!svg.includes('<svg')||svg.length<100)throw Error('Empty or invalid SVG returned');
-  results.push({id:format.id,status:'PASS',sample,svgBytes:svg.length});
- }catch(error){results.push({id:format.id,status:'FAIL',sample,detail:String(error?.message||error)});}
+  const candidates=thumbnailSamples(format);
+  let success=null, lastError='';
+  for(const sample of candidates){
+    try{
+      const options={
+        bcid:format.id,
+        text:prepareBarcodePayload(format,sample),
+        scale:1,
+        includetext:false,
+        paddingwidth:2,
+        paddingheight:2,
+        barcolor:'151515',
+        ...(format.kind==='linear'?{height:10}:{}),
+        ...(REQUIRED_OPTIONS[format.id]||{}),
+      };
+      if(['datamatrix','gs1datamatrix','hibcdatamatrix'].includes(format.id)){
+        options.format='square';
+      }
+      if(format.id==='rectangularmicroqrcode')options.version='R11x59';
+      const svg=bwipjs.toSVG(options);
+      if(!svg.includes('<svg')||svg.length<80)throw Error('Empty encoder result');
+      success={status:'PASS',sample,svgBytes:svg.length};
+      break;
+    }catch(error){lastError=String(error?.message||error);}
+  }
+  results.push({id:format.id,...(success||{status:'FAIL',candidates:candidates.length,detail:lastError})});
 }
-const summary=Object.fromEntries(['PASS','FAIL','NEEDS_FIXTURE'].map(s=>[s,results.filter(x=>x.status===s).length]));
-await writeFile('catalog-audit-report.json',JSON.stringify({version:'1.3.0',engine:'bwip-js@4.11.4',total:results.length,summary,results},null,2));
-for(const r of results)console.log(r.status.padEnd(13),r.id.padEnd(35),r.detail||'');
-console.log('TOTAL',results.length,JSON.stringify(summary));
+const summary=Object.fromEntries(['PASS','FAIL'].map(status=>[status,results.filter(r=>r.status===status).length]));
+const report={version:'1.5.1',engine:'bwip-js@4.11.4',total:FORMATS.length,summary,results};
+await writeFile('catalog-audit-report.json',JSON.stringify(report,null,2));
+for(const result of results)console.log(result.status.padEnd(5),result.id.padEnd(35),result.status==='PASS'?JSON.stringify(result.sample).slice(0,90):result.detail);
+console.log('TOTAL',FORMATS.length,JSON.stringify(summary));
 if(process.env.GITHUB_STEP_SUMMARY){
- const rows=['## A404DC — full 110-format encoder audit','','| Format | Result | Reason |','|---|---|---|',...results.map(r=>'| '+r.id+' | '+r.status+' | '+String(r.detail||'').replaceAll('|','/').slice(0,160)+' |'),''];
+ const rows=['## A404DC — real thumbnail fixtures','','**'+summary.PASS+' / '+FORMATS.length+' formats generated a valid sample.**','','| Symbology | Result | Example or error |','|---|---|---|',
+  ...results.map(r=>'| '+r.id+' | '+r.status+' | '+String(r.sample||r.detail||'').replace(/[\r\n|]/g,' ').slice(0,140)+' |'),''];
  await appendFile(process.env.GITHUB_STEP_SUMMARY,rows.join('\n'));
 }
 if(summary.FAIL)process.exitCode=1;
