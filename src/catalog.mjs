@@ -1,0 +1,146 @@
+/**
+ * Built-in barcode symbology catalog. IDs are BWIPP / bwip-js bcid values,
+ * except `qrcode`, which uses qr-code-styling to support logos and shapes.
+ */
+export const CATEGORIES = [
+  { id: 'all', label: 'Todos' },
+  { id: '2d', label: 'Códigos 2D' },
+  { id: 'linear', label: 'Lineares' },
+  { id: 'retail', label: 'Varejo' },
+  { id: 'gs1', label: 'GS1' },
+  { id: 'postal', label: 'Postais' },
+  { id: 'health', label: 'Saúde / HIBC' },
+];
+
+const data = [
+  // name | display name | category | kind | suggested example | hint
+  ['qrcode', 'QR Code', '2d', 'matrix', 'https://exemplo.com.br', 'Aceita links, texto, redes Wi-Fi, contatos e PIX. É o formato com suporte a logo.'],
+  ['microqrcode', 'Micro QR Code', '2d', 'matrix', '123456789', 'Uma versão compacta do QR Code para pequenas quantidades de dados.'],
+  ['rectangularmicroqrcode', 'rMQR (retangular)', '2d', 'matrix', 'HELLO-2026', 'QR retangular para superfícies estreitas.'],
+  ['datamatrix', 'Data Matrix', '2d', 'matrix', 'LOTE-2026-001', 'Muito usado em rastreabilidade, peças e identificação industrial.'],
+  ['datamatrixrectangular', 'Data Matrix retangular', '2d', 'matrix', 'LOTE-001', 'Alternativa retangular do Data Matrix.'],
+  ['datamatrixrectangularextension', 'Data Matrix DMRE', '2d', 'matrix', 'LOTE-2026', 'Data Matrix com extensões retangulares.'],
+  ['azteccode', 'Aztec Code', '2d', 'matrix', 'BILHETE-123456', 'Usado em transportes e bilhetagem digital.'],
+  ['azteccodecompact', 'Aztec compacto', '2d', 'matrix', 'BILHETE123', 'Versão compacta do Aztec Code.'],
+  ['aztecrune', 'Aztec Rune', '2d', 'matrix', '42', 'Simbologia Aztec de capacidade muito reduzida (0–255).'],
+  ['pdf417', 'PDF417', '2d', 'matrix', 'DOCUMENTO-123456789', 'Formato 2D empilhado usado em credenciais e documentos.'],
+  ['pdf417compact', 'PDF417 compacto', '2d', 'matrix', 'DOCUMENTO-2026', 'Variante compacta do PDF417.'],
+  ['micropdf417', 'MicroPDF417', '2d', 'matrix', 'LOTE-123', 'Alternativa reduzida do PDF417.'],
+  ['maxicode', 'MaxiCode', '2d', 'matrix', '1234567890', 'Formato circular de logística com regras próprias de codificação.'],
+  ['dotcode', 'DotCode', '2d', 'matrix', 'SERIE-001', 'Código 2D formado por pontos.'],
+  ['hanxin', 'Han Xin Code', '2d', 'matrix', '123456789', 'Simbologia 2D voltada a conteúdos de diversos idiomas.'],
+  ['ultracode', 'Ultracode', '2d', 'matrix', 'HELLO123', 'Simbologia matricial com especificações próprias.'],
+  ['codeone', 'Code One', '2d', 'matrix', 'CODE-ONE-2026', 'Simbologia matricial com várias opções de tamanho.'],
+  ['d3aqr', 'D3 AQR (beta)', '2d', 'matrix', 'HELLO2026', 'Formato experimental disponível no motor BWIPP.'],
+  ['swissqrcode', 'Swiss QR Code', '2d', 'matrix', '', 'Exige campos de pagamento suíço em estrutura específica.'],
+  ['gs1dlqrcode', 'GS1 Digital Link QR', 'gs1', 'matrix', 'https://id.gs1.org/01/09506000134352', 'QR com URI estruturada segundo GS1 Digital Link.'],
+  ['gs1dldatamatrix', 'GS1 Digital Link Data Matrix', 'gs1', 'matrix', 'https://id.gs1.org/01/09506000134352', 'Data Matrix com URI GS1 Digital Link.'],
+
+  ['code128', 'Code 128', 'linear', 'linear', 'ABC-123456789', 'Alta densidade, aceita letras, números e caracteres especiais.'],
+  ['code39', 'Code 39', 'linear', 'linear', 'ABC-12345', 'Código 39 tradicional, alfanumérico em maiúsculas.'],
+  ['code39ext', 'Code 39 estendido', 'linear', 'linear', 'ABC-12345', 'Expande o conjunto de caracteres suportados pelo Code 39.'],
+  ['code93', 'Code 93', 'linear', 'linear', 'ABC-12345', 'Mais compacto que o Code 39.'],
+  ['code93ext', 'Code 93 estendido', 'linear', 'linear', 'ABC-12345', 'Variante do Code 93 com conjunto estendido.'],
+  ['code11', 'Code 11', 'linear', 'linear', '12345-67', 'Código numérico utilizado em determinadas aplicações industriais.'],
+  ['code16k', 'Code 16K', 'linear', 'stacked', 'ABC123456', 'Simbologia empilhada baseada no Code 128.'],
+  ['code49', 'Code 49', 'linear', 'stacked', 'ABC123456', 'Código empilhado de alta densidade.'],
+  ['code2of5', 'Code 2 of 5', 'linear', 'linear', '123456', 'Código 2 de 5 numérico.'],
+  ['interleaved2of5', 'Interleaved 2 of 5', 'linear', 'linear', '12345678', 'ITF: números organizados em pares.'],
+  ['industrial2of5', 'Industrial 2 of 5', 'linear', 'linear', '123456', 'Variável industrial do padrão 2 de 5.'],
+  ['matrix2of5', 'Matrix 2 of 5', 'linear', 'linear', '123456', 'Código numérico Matrix 2 of 5.'],
+  ['datalogic2of5', 'Datalogic 2 of 5', 'linear', 'linear', '123456', 'Variante 2 de 5 para aplicações industriais.'],
+  ['coop2of5', 'COOP 2 of 5', 'linear', 'linear', '123456', 'Simbologia numérica COOP 2 of 5.'],
+  ['iata2of5', 'IATA 2 of 5', 'linear', 'linear', '123456', 'Variante 2 de 5 usada em contextos de transporte.'],
+  ['code32', 'Code 32 (farmacêutico)', 'health', 'linear', '12345678', 'Simbologia farmacêutica italiana.'],
+  ['codablockf', 'Codablock F', 'linear', 'stacked', 'ABC123456', 'Código empilhado para dados mais extensos.'],
+  ['posicode', 'PosiCode', 'linear', 'linear', 'ABC123', 'Simbologia linear de aplicação especializada.'],
+  ['plessey', 'Plessey', 'linear', 'linear', '01234567', 'Código de barras numérico Plessey.'],
+  ['msi', 'MSI Plessey', 'linear', 'linear', '123456789', 'Comum em identificação de estoque.'],
+  ['telepen', 'Telepen', 'linear', 'linear', 'ABC12345', 'Alfanumérico de largura constante.'],
+  ['telepennumeric', 'Telepen numérico', 'linear', 'linear', '12345678', 'Versão numérica do Telepen.'],
+  ['channelcode', 'Channel Code', 'linear', 'linear', '12345', 'Código de alta densidade numérica.'],
+  ['bc412', 'BC412', 'linear', 'linear', 'ABC123', 'Código linear industrial especializado.'],
+  ['pharmacode', 'Pharmacode', 'health', 'linear', '12345', 'Usado em embalagens farmacêuticas.'],
+  ['pharmacode2', 'Pharmacode 2-track', 'health', 'linear', '12345', 'Variante farmacêutica com duas trilhas.'],
+  ['flattermarken', 'Flattermarken', 'linear', 'linear', '123456', 'Código linear especializado.'],
+  ['rationalizedCodabar', 'Codabar', 'linear', 'linear', 'A123456B', 'Comum em bibliotecas, logística e usos legados.'],
+  ['raw', 'Raw 1D (avançado)', 'linear', 'linear', '', 'Entrada técnica específica para barras definidas manualmente.'],
+
+  ['ean13', 'EAN-13', 'retail', 'linear', '7891234567895', 'Código de produtos de varejo; normalmente 13 dígitos.'],
+  ['ean8', 'EAN-8', 'retail', 'linear', '96385074', 'Código compacto de varejo; 8 dígitos.'],
+  ['ean14', 'EAN-14', 'retail', 'linear', '12345678901231', 'Código numérico de embalagem e logística.'],
+  ['ean2', 'EAN-2 (suplemento)', 'retail', 'linear', '12', 'Suplemento de 2 dígitos para códigos EAN/UPC.'],
+  ['ean5', 'EAN-5 (suplemento)', 'retail', 'linear', '12345', 'Suplemento de 5 dígitos para códigos EAN/UPC.'],
+  ['upca', 'UPC-A', 'retail', 'linear', '012345678905', 'Código de produtos muito usado na América do Norte.'],
+  ['upce', 'UPC-E', 'retail', 'linear', '01234565', 'UPC compactado para embalagens menores.'],
+  ['itf14', 'ITF-14', 'retail', 'linear', '12345678901231', 'GTIN-14 em representação ITF para embalagens.'],
+  ['isbn', 'ISBN', 'retail', 'linear', '9780306406157', 'Identificação internacional de livros.'],
+  ['ismn', 'ISMN', 'retail', 'linear', '9790230671187', 'Identificação internacional de música impressa.'],
+  ['issn', 'ISSN', 'retail', 'linear', '0317-8471', 'Identificação internacional de publicações seriadas.'],
+  ['mands', 'Marks & Spencer', 'retail', 'linear', '123456', 'Simbologia específica de varejo.'],
+
+  ['gs1-128', 'GS1-128', 'gs1', 'linear', '(01)09506000134352(17)271231', 'Use identificadores de aplicação (AI), como (01) para GTIN.'],
+  ['sscc18', 'SSCC-18', 'gs1', 'linear', '123456789012345675', 'Identificador seriado de unidade logística.'],
+  ['gs1qrcode', 'GS1 QR Code', 'gs1', 'matrix', '(01)09506000134352', 'QR com identificadores de aplicação GS1; não aceita logo central neste editor.'],
+  ['gs1datamatrix', 'GS1 Data Matrix', 'gs1', 'matrix', '(01)09506000134352', 'Data Matrix com identificadores de aplicação GS1.'],
+  ['gs1datamatrixrectangular', 'GS1 Data Matrix retangular', 'gs1', 'matrix', '(01)09506000134352', 'Versão retangular do GS1 Data Matrix.'],
+  ['gs1dotcode', 'GS1 DotCode', 'gs1', 'matrix', '(01)09506000134352', 'Código DotCode com GS1 AIs.'],
+  ['gs1-cc', 'GS1 Composite 2D', 'gs1', 'stacked', '(10)ABC123', 'Componente 2D de símbolo composto GS1.'],
+  ['databaromni', 'GS1 DataBar Omni', 'gs1', 'linear', '09506000134352', 'GS1 DataBar Omnidirectional.'],
+  ['databartruncated', 'GS1 DataBar Truncated', 'gs1', 'linear', '09506000134352', 'Forma truncada do DataBar Omni.'],
+  ['databarstacked', 'GS1 DataBar Stacked', 'gs1', 'stacked', '09506000134352', 'GS1 DataBar empilhado.'],
+  ['databarstackedomni', 'GS1 DataBar Stacked Omni', 'gs1', 'stacked', '09506000134352', 'GS1 DataBar Omnidirectional empilhado.'],
+  ['databarlimited', 'GS1 DataBar Limited', 'gs1', 'linear', '09506000134352', 'Código GS1 para GTIN restrito.'],
+  ['databarexpanded', 'GS1 DataBar Expanded', 'gs1', 'linear', '(01)09506000134352', 'DataBar para AIs adicionais.'],
+  ['databarexpandedstacked', 'GS1 DataBar Expanded Stacked', 'gs1', 'stacked', '(01)09506000134352', 'DataBar Expanded em linhas empilhadas.'],
+  ['gs1-128composite', 'GS1-128 Composite', 'gs1', 'stacked', '(01)09506000134352|(10)ABC', 'Código composto; sintaxe varia entre as partes.'],
+  ['ean13composite', 'EAN-13 Composite', 'gs1', 'stacked', '7891234567895|(10)ABC', 'EAN-13 com componente 2D composto.'],
+  ['ean8composite', 'EAN-8 Composite', 'gs1', 'stacked', '96385074|(10)ABC', 'EAN-8 com componente composto 2D.'],
+  ['upcacomposite', 'UPC-A Composite', 'gs1', 'stacked', '012345678905|(10)ABC', 'UPC-A com componente composto 2D.'],
+  ['upcecomposite', 'UPC-E Composite', 'gs1', 'stacked', '01234565|(10)ABC', 'UPC-E com componente composto 2D.'],
+  ['databaromnicomposite', 'GS1 DataBar Omni Composite', 'gs1', 'stacked', '09506000134352|(10)ABC', 'DataBar Omnidirectional com código composto.'],
+  ['databartruncatedcomposite', 'GS1 DataBar Truncated Composite', 'gs1', 'stacked', '09506000134352|(10)ABC', 'DataBar Truncated com código composto.'],
+  ['databarstackedcomposite', 'GS1 DataBar Stacked Composite', 'gs1', 'stacked', '09506000134352|(10)ABC', 'DataBar Stacked com componente composto.'],
+  ['databarstackedomnicomposite', 'GS1 DataBar Stacked Omni Composite', 'gs1', 'stacked', '09506000134352|(10)ABC', 'DataBar Stacked Omni com componente 2D.'],
+  ['databarlimitedcomposite', 'GS1 DataBar Limited Composite', 'gs1', 'stacked', '09506000134352|(10)ABC', 'DataBar Limited com componente 2D.'],
+  ['databarexpandedcomposite', 'GS1 DataBar Expanded Composite', 'gs1', 'stacked', '(01)09506000134352|(10)ABC', 'DataBar Expanded com componente 2D.'],
+  ['databarexpandedstackedcomposite', 'GS1 DataBar Expanded Stacked Composite', 'gs1', 'stacked', '(01)09506000134352|(10)ABC', 'DataBar Expanded Stacked com componente 2D.'],
+  ['gs1northamericancoupon', 'GS1 North American Coupon', 'gs1', 'stacked', '', 'Formato de cupom GS1 que exige dados estruturados específicos.'],
+
+  ['postnet', 'USPS POSTNET', 'postal', 'postal', '123456789', 'Código postal numérico americano.'],
+  ['planet', 'USPS PLANET', 'postal', 'postal', '12345678901', 'Simbologia postal USPS legada.'],
+  ['onecode', 'USPS Intelligent Mail', 'postal', 'postal', '01234567094987654321', 'Intelligent Mail Barcode (IMb) de 65 barras.'],
+  ['royalmail', 'Royal Mail 4-State', 'postal', 'postal', 'ABC123456', 'Código postal de quatro estados britânico.'],
+  ['mailmark', 'Royal Mail Mailmark', 'postal', 'postal', '', 'Formato postal com campos obrigatórios estruturados.'],
+  ['kix', 'KIX (Holanda)', 'postal', 'postal', '1234AB56', 'Código postal KIX usado na Holanda.'],
+  ['auspost', 'Australia Post', 'postal', 'postal', '', 'Código australiano de quatro estados; requer campos específicos.'],
+  ['japanpost', 'Japan Post', 'postal', 'postal', '1234567-890', 'Código postal japonês.'],
+  ['leitcode', 'Deutsche Post Leitcode', 'postal', 'postal', '1234567890123', 'Código de roteamento postal alemão.'],
+  ['identcode', 'Deutsche Post Identcode', 'postal', 'postal', '12345678901', 'Código de identificação postal alemão.'],
+  ['daft', 'DAFT (4-State)', 'postal', 'postal', 'FTAD', 'Código postal de quatro estados definido por caracteres DAFT.'],
+
+  ['hibccode128', 'HIBC Code 128', 'health', 'linear', '+A123BJC5D6E', 'Formato sanitário HIBC; requer prefixo e validação adequados.'],
+  ['hibccode39', 'HIBC Code 39', 'health', 'linear', '+A123BJC5D6E', 'HIBC em Code 39.'],
+  ['hibcazteccode', 'HIBC Aztec', 'health', 'matrix', '+A123BJC5D6E', 'HIBC em Aztec Code.'],
+  ['hibcdatamatrix', 'HIBC Data Matrix', 'health', 'matrix', '+A123BJC5D6E', 'HIBC em Data Matrix.'],
+  ['hibcdatamatrixrectangular', 'HIBC Data Matrix retangular', 'health', 'matrix', '+A123BJC5D6E', 'HIBC em Data Matrix retangular.'],
+  ['hibcqrcode', 'HIBC QR Code', 'health', 'matrix', '+A123BJC5D6E', 'HIBC em QR Code sem personalização de logo.'],
+  ['hibcpdf417', 'HIBC PDF417', 'health', 'matrix', '+A123BJC5D6E', 'HIBC em PDF417.'],
+  ['hibcmicropdf417', 'HIBC MicroPDF417', 'health', 'matrix', '+A123BJC5D6E', 'HIBC em MicroPDF417.'],
+  ['hibccodablockf', 'HIBC Codablock F', 'health', 'stacked', '+A123BJC5D6E', 'HIBC em Codablock F.'],
+  ['pzn', 'PZN (Alemanha)', 'health', 'linear', '12345678', 'Identificador farmacêutico alemão.'],
+];
+
+export const FORMATS = data.map(([id, name, category, kind, example, hint]) => ({ id, name, category, kind, example, hint }));
+export const QUICK_IDS = ['qrcode', 'code128', 'datamatrix', 'ean13'];
+export const SIDEBAR_IDS = ['qrcode', 'code128', 'ean13', 'pdf417', 'datamatrix', 'azteccode'];
+export const byId = new Map(FORMATS.map(item => [item.id, item]));
+export function lookupFormat(id) { return byId.get(id) || byId.get('qrcode'); }
+export function searchFormats(query = '', category = 'all') {
+  const q = query.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  return FORMATS.filter(format => {
+    if (category !== 'all' && format.category !== category) return false;
+    const haystack = `${format.id} ${format.name} ${format.hint} ${format.category}`.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    return haystack.includes(q);
+  });
+}
