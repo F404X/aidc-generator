@@ -1,14 +1,14 @@
 {
   "name": "aidc-generator",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
-  "description": "A404DC: AIDC barcode and QR generator with automatic rMQR sizing and full-width interface",
+  "description": "A404DC: QR image editing, human-readable labels, checkerboard transparency and demo inputs",
   "type": "module",
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "start": "node scripts/serve.mjs",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check src/app.mjs && node --check src/renderer.mjs && node --check src/catalog.mjs && node --check src/payloads.mjs && node --check src/utils.mjs && node --check src/engines.mjs && node --check src/validation.mjs && node --check src/symbology-options.mjs",
+    "check": "node --check src/app.mjs && node --check src/renderer.mjs && node --check src/catalog.mjs && node --check src/payloads.mjs && node --check src/utils.mjs && node --check src/engines.mjs && node --check src/validation.mjs && node --check src/symbology-options.mjs && node --check src/qr-extensions.mjs && node --check src/thumbnails.mjs",
     "audit:engine": "node scripts/audit-engine.mjs"
   },
   "engines": {

@@ -97,3 +97,11 @@ The rMQR encoder requires an explicit version (R7x43 through R17x139) with M or 
 ## Verifying all formats
 
 Run `npm test` to check the catalog and rMQR option profiles. Run `npm run audit:engine` with the pinned bwip-js npm package installed to encode example data for all 110 formats, producing `catalog-audit-report.json`. Some specialized formats require full standard-specific data and may be reported as needing a test fixture rather than a false positive.
+
+## 1.5 features
+
+Logo images are reduced to 128–512 pixels before embedding directly into an SVG, avoiding third-party async image-loading stalls. Use the collapsed **Edit Image** panel to change QR footprint (8–28% of width), black/white threshold, clear zone and downsample resolution. This affects only QR Code.
+
+QR Wi-Fi, contact, email and Pix templates provide pre-filled editable examples and independent **Show below QR** checkboxes for each field. Selected values are drawn below the QR using plain SVG text nodes, and are included in PNG/SVG exports. Example Pix uses the fictional city **Transilvania** and `sample@example.invalid`, which is not an actual payable key.
+
+The preview uses an adaptive white-gray checkerboard for transparency, and default 1D bar height is increased through the actual encoder, not by stretching output images. Specialist symbology fixtures may still require valid standard-specific input.

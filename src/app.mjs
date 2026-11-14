@@ -1,20 +1,23 @@
-import { CATEGORIES, FORMATS, QUICK_IDS, lookupFormat, searchFormats } from './catalog.mjs?v=1.4.0';
+import { CATEGORIES, FORMATS, QUICK_IDS, lookupFormat, searchFormats } from './catalog.mjs?v=1.5.0';
 import { TEMPLATES, buildTemplate } from './payloads.mjs?v=1.4.0';
-import { renderCode, svgBlob, svgToRaster } from './renderer.mjs?v=1.4.0';
+import { renderCode, svgBlob, svgToRaster } from './renderer.mjs?v=1.5.0';
 import { ensureEngine, warmupEngines } from './engines.mjs?v=1.4.0';
 import { observeThumbnail, unobserveThumbnails } from './thumbnails.mjs?v=1.4.0';
 import { normalizeHex, contrastRatio, safeFilename, triggerDownload, nextFrame, debounce } from './utils.mjs?v=1.4.0';
 
 const $ = id => document.getElementById(id);
-const DEFAULTS = Object.freeze({foreground:'#19170E', background:'#FFFFFF', foregroundOpacity:100, backgroundOpacity:100, size:512, margin:16, dotStyle:'square', cornerStyle:'square', correction:'H', barHeight:18, showText:true, logo:null, logoSize:22});
+const DEFAULTS = Object.freeze({foreground:'#19170E', background:'#FFFFFF', foregroundOpacity:100, backgroundOpacity:100, size:512, margin:16, dotStyle:'square', cornerStyle:'square', correction:'H', barHeight:34, showText:true, logo:null, logoSize:20, logoBlackWhite:false, logoThreshold:145, logoMaxDimension:384, logoPadding:3});
+const SAMPLE_FIELDS={
+ wifi:{ssid:'Transilvania WiFi',password:'sample-password',encryption:'WPA',hidden:false},
+ contact:{name:'Alex Demo',phone:'+55 11 99999-9999',email:'alex@example.invalid',organization:'Example Co.',website:'https://example.com'},
+ email:{to:'hello@example.invalid',subject:'Sample message',body:'Hello from A404DC'},
+ pix:{key:'sample@example.invalid',name:'SAMPLE MERCHANT',city:'Transilvania',amount:'25.90',description:'Demo payment'},
+};
+const CAPTION_DEFAULTS={wifi:{ssid:true},contact:{name:true,phone:true},email:{to:true,subject:true},pix:{name:true,city:true,amount:true,description:true}};
+
 const state = {
   format: lookupFormat('qrcode'), template:'text', settings:{...DEFAULTS},
-  values: {qrcode:''}, fields: {
-    wifi:{ssid:'',password:'',encryption:'WPA',hidden:false},
-    contact:{name:'', phone:'',email:'',organization:'',website:''},
-    email:{to:'',subject:'',body:''},
-    pix:{key:'', name:'', city:'', amount:'', description:''},
-  },
+  values: {qrcode:'https://example.com'}, fields:structuredClone(SAMPLE_FIELDS), captions:structuredClone(CAPTION_DEFAULTS), logoSource:null, logoToken:0,
   svg:null, exportSvg:null, lastPayload:'', lastRevision:-1, exportRevision:-1, revision:0, previewUrl:null, previewToken:0,
   catalogCategory:'all', batchRunning:false, lastFocused:null,
 };
@@ -33,7 +36,19 @@ function toast(message, type='success') {
   $('toastStack').append(item); icons();
   setTimeout(() => { item.classList.add('toast-out'); setTimeout(()=>item.remove(),250); },3500);
 }
-function snapshotSettings() { return {...state.settings}; }
+function snapshotSettings() {
+  const settings={...state.settings};
+  if(state.format.id==='qrcode' && state.template!=='text'){
+    settings.captionItems=TEMPLATES[state.template].fields
+      .filter(field=>state.captions[state.template]?.[field.key] && String(state.fields[state.template][field.key]??'').trim())
+      .map(field=>({label:field.label,value:String(state.fields[state.template][field.key])}));
+  }
+  return settings;
+}
+function updateCheckerboard() {
+  const opacity=Math.max(0,Math.min(100,Number(state.settings.backgroundOpacity??100)))/100;
+  $('previewStage').style.setProperty('--checker-strength',String((.055+(1-opacity)*.27).toFixed(3)));
+}
 function currentPayload() {
   return state.format.id === 'qrcode' && state.template !== 'text'
     ? buildTemplate(state.template,state.fields[state.template])
@@ -116,8 +131,7 @@ async function paintPreview(svg, revision) {
     await decoded.decode();
     if (revision !== state.revision || token !== state.previewToken) return false;
     const image = $('previewImage');
-    $('previewArtboard').classList.toggle('is-transparent',
-      state.settings.foregroundOpacity < 100 || state.settings.backgroundOpacity < 100);
+    updateCheckerboard();
     const previousUrl = state.previewUrl;
     state.previewUrl = url;
     image.src = url;
@@ -163,6 +177,7 @@ function changed() {
   state.exportSvg = null;
   state.exportRevision = -1;
   refreshCount();
+  updateCheckerboard();
   scheduleRender.cancel();
   if (!hasInput()) { clearPreview(); return; }
   scheduleRender();
@@ -204,7 +219,7 @@ function selectFormat(id) {
   if (state.format.id !== next.id) {
     if (state.template === 'text' || state.format.id !== 'qrcode') state.values[state.format.id] = $('payloadInput').value;
     state.format = next;
-    $('payloadInput').value = state.values[next.id] ?? '';
+    $('payloadInput').value = state.values[next.id] ?? next.example ?? '';
   }
   if (next.id !== 'qrcode') {
     state.template = 'text';
@@ -223,25 +238,27 @@ function selectFormat(id) {
   changed();
 }
 
-function addField(field, data) {
-  const label = el('label','dynamic-field');
-  if (field.type === 'checkbox') {
-    const check = el('input');check.type='checkbox';check.checked = Boolean(data[field.key]);
-    check.addEventListener('change',()=>{data[field.key]=check.checked;changed();});
-    label.append(check,el('span','',field.label));
-  } else {
-    label.append(el('span','dynamic-label',field.label));
-    const control = field.type === 'select' ? el('select') : el('input');
-    if (field.type === 'select') {
-      for (const [value,title] of field.options) {
-        const opt = el('option','',title);opt.value=value;control.append(opt);
-      }
-      control.value = data[field.key] || 'WPA';
-    } else { control.type = 'text'; control.placeholder=field.placeholder || ''; control.value=data[field.key] || ''; }
-    control.addEventListener('input',()=>{data[field.key]=control.value;changed();});
-    label.append(control);
-  }
-  return label;
+function addField(field,data) {
+ const label=el('label','dynamic-field');
+ const row=el('span','dynamic-label');
+ row.append(el('span','',field.label));
+ const include=el('span','caption-toggle');
+ const toggle=el('input');toggle.type='checkbox';toggle.checked=Boolean(state.captions[state.template]?.[field.key]);
+ toggle.setAttribute('aria-label','Include '+field.label+' below QR');
+ toggle.addEventListener('change',()=>{state.captions[state.template][field.key]=toggle.checked;changed();});
+ include.append(toggle,el('span','','Show below QR'));row.append(include);label.append(row);
+ if(field.type==='checkbox'){
+  const control=el('input');control.type='checkbox';control.checked=Boolean(data[field.key]);
+  control.addEventListener('change',()=>{data[field.key]=control.checked;changed();});label.append(control);
+ }else{
+  const control=field.type==='select'?el('select'):el('input');
+  if(field.type==='select'){
+   for(const [value,title] of field.options){const option=el('option','',title);option.value=value;control.append(option);}
+   control.value=data[field.key]||'WPA';
+  }else{control.type='text';control.placeholder=field.placeholder||'';control.value=data[field.key]||'';}
+  control.addEventListener('input',()=>{data[field.key]=control.value;changed();});label.append(control);
+ }
+ return label;
 }
 function syncTemplateUI() {
   for (const button of document.querySelectorAll('[data-template]')) {
@@ -268,7 +285,7 @@ function chooseTemplate(template) {
   if (state.format.id !== 'qrcode' || !TEMPLATES[template]) return;
   if (state.template === 'text') state.values.qrcode = $('payloadInput').value;
   state.template=template;
-  if (template === 'text') $('payloadInput').value=state.values.qrcode || '';
+  if (template === 'text') $('payloadInput').value=state.values.qrcode || 'https://example.com';
   syncTemplateUI(); changed();
 }
 
@@ -290,7 +307,7 @@ function syncOpacity(which) {
   $(`${which}OpacityOutput`).textContent = `${value}%`;
 }
 function resetAll() {
-  state.settings={...DEFAULTS}; state.template='text';
+  state.settings={...DEFAULTS}; state.template='text';state.values={qrcode:'https://example.com'};state.fields=structuredClone(SAMPLE_FIELDS);state.captions=structuredClone(CAPTION_DEFAULTS);state.logoSource=null;state.logoToken++;
   for(const prop of ['foreground','background']) {
     syncColor(prop);
     syncOpacity(prop);
@@ -308,8 +325,11 @@ function resetAll() {
   $('logoControls').hidden=true;
   $('uploadTitle').textContent='Click or drop your logo';
   $('logoUpload').value='';
+  $('logoBlackWhite').checked=false;$('logoThresholdWrap').hidden=true;
+  $('logoThreshold').value='145';$('logoThresholdOutput').textContent='145';
+  $('logoMaxDimension').value='384';$('logoPadding').value='3';$('logoPaddingOutput').textContent='3 px';
   selectFormat('qrcode');
-  $('payloadInput').value='';
+  $('payloadInput').value='https://example.com';
   state.values.qrcode=$('payloadInput').value;
   syncTemplateUI(); changed();
   toast('Settings reset.');
@@ -357,22 +377,48 @@ function renderCatalog() {
   icons();
 }
 
-async function readLogo(file) {
-  if (!file) return;
-  if (!['image/png','image/jpeg','image/webp'].includes(file.type)) { toast('Use a PNG, JPG or WEBP logo.','error'); return; }
-  if (file.size > 2 * 1024 * 1024) {toast('The image must be 2 MB or smaller.','error');return;}
-  try {
-    const dataURL = await new Promise((resolve,reject) => {
-      const reader = new FileReader(); reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Could not read the image.'));reader.readAsDataURL(file);
-    });
-    state.settings.logo=dataURL;
-    $('logoControls').hidden=false;
-    $('uploadTitle').textContent=file.name;
-    changed();
-    toast('Logo added. Check the result with a real scanner.');
-  } catch(error) {toast(error.message,'error');}
+async function processLogo() {
+ const token=++state.logoToken;
+ if(!state.logoSource)return;
+ const file=state.logoSource;
+ let image=null,objectUrl=null,bitmap=null;
+ try {
+  if('createImageBitmap' in window){try{bitmap=await createImageBitmap(file);}catch{}}
+  if(!bitmap) {
+   objectUrl=URL.createObjectURL(file);
+   image=new Image();image.src=objectUrl;
+   await Promise.race([image.decode(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Image decoding timed out.')),8000))]);
+  }
+  if(token!==state.logoToken)return;
+  const source=bitmap||image,limit=Number(state.settings.logoMaxDimension)||384;
+  const ratio=Math.min(1,limit/Math.max(source.width,source.height));
+  const width=Math.max(1,Math.round(source.width*ratio)),height=Math.max(1,Math.round(source.height*ratio));
+  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  if(!ctx)throw Error('Image editing is unsupported in this browser.');
+  ctx.drawImage(source,0,0,width,height);
+  if(state.settings.logoBlackWhite) {
+   const frame=ctx.getImageData(0,0,width,height),threshold=Number(state.settings.logoThreshold);
+   for(let i=0;i<frame.data.length;i+=4){
+    const brightness=frame.data[i]*.299+frame.data[i+1]*.587+frame.data[i+2]*.114;
+    const mono=brightness>=threshold?255:0;
+    frame.data[i]=frame.data[i+1]=frame.data[i+2]=mono;
+   }
+   ctx.putImageData(frame,0,0);
+  }
+  if(token!==state.logoToken)return;
+  state.settings.logo=canvas.toDataURL('image/png');
+  $('logoControls').hidden=false;changed();
+ }finally{bitmap?.close?.();if(objectUrl)URL.revokeObjectURL(objectUrl);}
 }
-
+async function readLogo(file) {
+ if(!file)return;
+ if(!/^image\\/(png|jpeg|webp|gif|bmp)$/i.test(file.type)){toast('Choose PNG, JPG, WEBP, GIF or BMP.','error');return;}
+ if(file.size>10*1024*1024){toast('The image must be 10 MB or smaller.','error');return;}
+ state.logoSource=file;$('uploadTitle').textContent=file.name;
+ try{await processLogo();toast('Logo ready. Use Edit Image to customize.');}
+ catch(error){state.settings.logo=null;changed();toast(error.message||'Image processing failed.','error');}
+}
 async function saveSingle(kind) {
   const button = $(kind === 'png' ? 'downloadPng' : kind === 'svg' ? 'downloadSvg' : 'moreExport');
   button.disabled=true;
@@ -475,7 +521,22 @@ function attachEvents() {
   for (const event of ['dragenter','dragover']) upload.addEventListener(event,e=>{e.preventDefault();upload.classList.add('drag-over');});
   for (const event of ['dragleave','drop']) upload.addEventListener(event,e=>{e.preventDefault();upload.classList.remove('drag-over');});
   upload.addEventListener('drop',e=>readLogo(e.dataTransfer?.files?.[0]));
-  $('removeLogo').addEventListener('click',()=>{state.settings.logo=null;$('logoUpload').value='';$('logoControls').hidden=true;$('uploadTitle').textContent='Click or drop your logo';changed();});
+  $('removeLogo').addEventListener('click',()=>{state.logoSource=null;state.logoToken++;state.settings.logo=null;$('logoUpload').value='';$('logoControls').hidden=true;$('uploadTitle').textContent='Click or drop your logo';changed();});
+  $('logoBlackWhite').addEventListener('change',e=>{
+    state.settings.logoBlackWhite=e.target.checked;$('logoThresholdWrap').hidden=!e.target.checked;
+    void processLogo().catch(error=>toast(error.message,'error'));
+  });
+  $('logoThreshold').addEventListener('input',e=>{
+    state.settings.logoThreshold=Number(e.target.value);$('logoThresholdOutput').textContent=e.target.value;
+    void processLogo().catch(error=>toast(error.message,'error'));
+  });
+  $('logoMaxDimension').addEventListener('change',e=>{
+    state.settings.logoMaxDimension=Number(e.target.value);
+    void processLogo().catch(error=>toast(error.message,'error'));
+  });
+  $('logoPadding').addEventListener('input',e=>{
+    state.settings.logoPadding=Number(e.target.value);$('logoPaddingOutput').textContent=e.target.value+' px';changed();
+  });
   for(const id of ['openCatalog','openCatalogSide']) $(id).addEventListener('click',openCatalog);
   for(const id of ['closeCatalog','modalCancel']) $(id).addEventListener('click',closeCatalog);
   $('catalogModal').addEventListener('mousedown',e=>{if(e.target===$('catalogModal'))closeCatalog();});
@@ -512,6 +573,8 @@ function init() {
   $('formatCountLabel').textContent=String(FORMATS.length);
   attachEvents();
   for (const side of ['foreground','background']) syncOpacity(side);
+  $('payloadInput').value=state.values.qrcode;
+  updateCheckerboard();
   if ('ResizeObserver' in window) {
     const onResize = debounce(() => {
       if (state.svg && state.lastRevision === state.revision) {
