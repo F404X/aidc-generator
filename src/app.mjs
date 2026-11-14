@@ -47,7 +47,7 @@ function snapshotSettings() {
 }
 function updateCheckerboard() {
   const opacity=Math.max(0,Math.min(100,Number(state.settings.backgroundOpacity??100)))/100;
-  $('previewStage').style.setProperty('--checker-strength',String((.055+(1-opacity)*.27).toFixed(3)));
+  $('previewStage').style.setProperty('--checker-strength',String((.12+(1-opacity)*.88).toFixed(3)));
 }
 function currentPayload() {
   return state.format.id === 'qrcode' && state.template !== 'text'
