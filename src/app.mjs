@@ -192,7 +192,8 @@ async function ensureResult() {
   const payload=currentPayload();
   const svg=await renderCode(state.format,payload,snapshotSettings());
   if (revision !== state.revision) throw new Error('Settings changed. Please try exporting again.');
-  recordDetectedVariation(state.format,svg);
+  // Export output can omit auto-detection metadata; keep the preview's last detection.
+  if(extractDetectedVariation(svg))recordDetectedVariation(state.format,svg);
   state.exportSvg = svg;
   state.exportRevision = revision;
   return svg;
