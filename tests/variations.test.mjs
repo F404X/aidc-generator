@@ -43,3 +43,31 @@ test('auto is safe for every variation and other codes remain unaffected',()=>{
  assert.equal(variationSpec('code128'),null);
  assert.deepEqual(variationOptions('code128','auto'),{});
 });
+
+test('real BWIPP encoder honors selected versions across symbol families',async()=>{
+ const {default:bwipjs}=await import('bwip-js');
+ const samples=[
+  ['qrcode','HELLO WORLD','3'],
+  ['microqrcode','123456','M3'],
+  ['rectangularmicroqrcode','123456','R11x59'],
+  ['datamatrix','HELLO','20x20'],
+  ['datamatrixrectangular','1234','12x26'],
+  ['datamatrixrectangularextension','1234','8x80'],
+  ['azteccode','HELLO','3'],
+  ['azteccodecompact','HELLO','3'],
+  ['pdf417','HELLO','4'],
+  ['pdf417compact','HELLO','4'],
+  ['micropdf417','HELLO','15x4'],
+  ['codeone','HELLO','C'],
+  ['hanxin','HELLO','3'],
+ ];
+ for(const [id,text,selected] of samples){
+  const options={
+   bcid:id,text,scale:1,paddingwidth:2,paddingheight:2,
+   ...(id==='rectangularmicroqrcode'?{eclevel:'M'}:{}),
+   ...variationOptions(id,selected),
+  };
+  const result=bwipjs.toSVG(options);
+  assert.ok(result.includes('<svg')&&result.length>80, id+' '+selected);
+ }
+});
