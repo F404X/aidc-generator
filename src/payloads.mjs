@@ -60,10 +60,11 @@ export function buildPix({ key = '', name = '', city = '', amount = '', descript
   const location = normalizeAscii(city).toUpperCase().slice(0, 15);
   if (!merchant || !location) throw new Error('Enter the recipient name and city.');
   let amountValue = '';
-  if (safe(amount)) {
-    const normalized = safe(amount).replace(',', '.');
+  const enteredAmount = safe(amount);
+  if (enteredAmount) {
+    const normalized = enteredAmount.replace(',', '.');
     const numeric = Number(normalized);
-    if (!/^\d+(?:[.,]\d{1,2})?$/.test(safe(amount)) || !Number.isFinite(numeric) || numeric <= 0 || numeric > 9999999999.99) {
+    if (!/^\d+(?:[.,]\d{1,2})?$/.test(enteredAmount) || !Number.isFinite(numeric) || numeric <= 0 || numeric > 9999999999.99) {
       throw new Error('The Pix amount must be positive, with up to two decimal places.');
     }
     amountValue = numeric.toFixed(2);
