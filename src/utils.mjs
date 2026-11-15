@@ -56,7 +56,7 @@ export function debounceWithMaxWait(fn,delay=55,maxWait=170){
   };
   scheduled.cancel=()=>{
     if(timer!==null)clearTimeout(timer);
-    timer=null;firstCall=null;
+    timer=null;firstCall=null;args=[];
   };
   return scheduled;
 }
