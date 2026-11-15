@@ -14,6 +14,19 @@ export function prepareBarcodePayload(format, content) {
   const value = String(content ?? '').trim();
   if (!value) throw new Error('Enter content to generate a code.');
   const expectedLength = MOD10_LENGTHS[format.id];
+  // EAN-14 and SSCC-18 are GS1-128 wrappers: BWIPP requires their AI prefix.
+  // Accept bare digits for convenience, but verify the checksum before encoding.
+  if (format.id === 'ean14' || format.id === 'sscc18') {
+    const ai = format.id === 'ean14' ? '01' : '00';
+    const prefix = `(${ai})`;
+    const digits = value.startsWith(prefix) ? value.slice(prefix.length) : value;
+    if (!DIGITS.test(digits)) throw new Error(`${format.name} accepts digits only (${expectedLength-1} or ${expectedLength} digits).`);
+    if (digits.length === expectedLength-1) return prefix + digits + mod10CheckDigit(digits);
+    if (digits.length !== expectedLength) throw new Error(`${format.name} requires ${expectedLength-1} or ${expectedLength} digits.`);
+    const check = mod10CheckDigit(digits.slice(0,-1));
+    if (check !== digits.at(-1)) throw new Error(`Incorrect check digit for ${format.name}: expected ${check}.`);
+    return prefix + digits;
+  }
   if (expectedLength) {
     if (!DIGITS.test(value)) throw new Error(`${format.name} accepts digits only (${expectedLength-1} or ${expectedLength} digits).`);
     if (value.length === expectedLength-1) return value + mod10CheckDigit(value);
