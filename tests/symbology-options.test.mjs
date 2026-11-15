@@ -32,3 +32,9 @@ test('all catalog examples pass through payload preparation without missing engi
   catch(e){assert.doesNotMatch(String(e.message),/version must be provided|missing encoder option/i,f.id);}
  }
 });
+
+test('specialized BWIPP formats receive required encoder options',()=>{
+ assert.deepEqual(REQUIRED_OPTIONS.d3aqr,{category:2842,hostratio:2});
+ assert.deepEqual(REQUIRED_OPTIONS.mailmark,{type:29});
+ assert.deepEqual(REQUIRED_OPTIONS.rectangularmicroqrcode,{eclevel:'M'});
+});
