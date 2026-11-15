@@ -2,7 +2,7 @@
   "name": "aidc-generator",
   "version": "1.6.1",
   "private": true,
-  "description": "A404DC Variation checkbox with actual auto-selected version and responsive code input",
+  "description": "A404DC browser-based generator for 110 barcode, QR and AIDC symbologies",
   "type": "module",
   "scripts": {
     "dev": "node scripts/serve.mjs",
