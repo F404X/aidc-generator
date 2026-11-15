@@ -69,3 +69,20 @@ test('all formats provide English hints and non-empty IDs', () => {
     assert.ok(!/\b(código|número|exige|não|formato)\b/i.test(f.hint), f.id);
   }
 });
+
+test('EAN-14 and SSCC-18 include required GS1 AI prefixes and validate check digits', async () => {
+  const {prepareBarcodePayload,mod10CheckDigit}=await import('../src/validation.mjs');
+  for (const [id,ai,digits] of [
+    ['ean14','01','0952876543210'],
+    ['sscc18','00','09528765432101234'],
+  ]) {
+    const format=lookupFormat(id);
+    const encoded=`(${ai})${digits}${mod10CheckDigit(digits)}`;
+    assert.equal(prepareBarcodePayload(format,digits),encoded);
+    assert.equal(prepareBarcodePayload(format,`(${ai})${digits}`),encoded);
+    assert.equal(prepareBarcodePayload(format,encoded),encoded);
+    const wrong=encoded.slice(0,-1)+(encoded.endsWith('0')?'1':'0');
+    assert.throws(()=>prepareBarcodePayload(format,wrong),/check digit/i,id);
+    assert.throws(()=>prepareBarcodePayload(format,'ABC'),/digits only/i,id);
+  }
+});
