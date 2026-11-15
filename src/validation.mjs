@@ -3,7 +3,11 @@ const MOD10_LENGTHS = Object.freeze({ ean8:8, ean13:13, ean14:14, upca:12, itf14
 const DIGITS = /^\d+$/;
 export function mod10CheckDigit(digits) {
   if (!DIGITS.test(digits)) throw new Error('Only digits are allowed.');
-  const sum = [...digits].reverse().reduce((total, digit, index) => total + Number(digit) * (index % 2 === 0 ? 3 : 1),0);
+  let sum = 0;
+  for (let index = 0; index < digits.length; index++) {
+    const digit = digits.charCodeAt(digits.length - index - 1) - 48;
+    sum += digit * (index % 2 === 0 ? 3 : 1);
+  }
   return String((10 - sum % 10) % 10);
 }
 export function prepareBarcodePayload(format, content) {
