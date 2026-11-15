@@ -65,7 +65,10 @@ const SPECIAL = {
   databartruncatedcomposite: ['(01)03612345678904|(11)990102'],
   databarstackedcomposite: ['(01)03412345678900|(17)010200'],
   databarstackedomnicomposite: ['(01)03612345678904|(11)990102'],
-  databarlimitedcomposite: ['(01)03512345678907|(21)abcdefghijklmnopqrstuv'],
+  databarlimitedcomposite: [
+    '(01)15012345678907|(99)1234567',
+    '(01)03512345678907|(21)abcdefghijklmnopqrstuv',
+  ],
   databarexpandedcomposite: ['(01)09506000134352|(10)ABC'],
   databarexpandedstackedcomposite: ['(01)09506000134352|(10)ABC'],
   gs1datamatrix: ['(01)09506000134352','(01)09506000134352(17)271231'],
