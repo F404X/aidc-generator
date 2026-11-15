@@ -7,6 +7,10 @@ const mime = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf
 const port = Number(process.env.PORT || 4173);
 createServer(async (req,res) => {
   try {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      res.writeHead(405, { Allow:'GET, HEAD' }).end('Method Not Allowed');
+      return;
+    }
     const url = new URL(req.url, 'http://localhost');
     let pathname = decodeURIComponent(url.pathname);
     if (pathname === '/') pathname = '/index.html';
