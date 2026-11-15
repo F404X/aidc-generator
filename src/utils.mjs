@@ -14,7 +14,7 @@ export function contrastRatio(a, b) {
   return (x+0.05)/(y+0.05);
 }
 export function safeFilename(str) {
-  return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60) || 'aidc-code';
+  return String(str ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60) || 'aidc-code';
 }
 export function triggerDownload(blob, name) {
   const url = URL.createObjectURL(blob);
