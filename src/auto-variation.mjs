@@ -10,7 +10,8 @@ export function inferBwipVariation(autoSvg,baseOptions,spec,toSVG,maxCandidates=
  if(!spec?.options?.length || typeof toSVG!=='function')return null;
  const target=bounds(autoSvg);
  if(!target)return null;
- for(const option of spec.options.slice(0,maxCandidates)){
+ for(let i=0;i<Math.min(maxCandidates,spec.options.length);i++){
+  const option=spec.options[i];
   try{
    const candidate=toSVG({...baseOptions,[spec.option]:option.value});
    if(candidate===autoSvg)return option.value;
