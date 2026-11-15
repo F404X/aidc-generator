@@ -24,12 +24,13 @@ export function buildContact({ name = '', phone = '', email = '', organization =
 }
 
 export function buildEmail({ to = '', subject = '', body = '' }) {
-  if (!safe(to)) throw new Error('Enter the recipient email address.');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(safe(to))) throw new Error('Enter a valid email address.');
+  const recipient = safe(to);
+  if (!recipient) throw new Error('Enter the recipient email address.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) throw new Error('Enter a valid email address.');
   const params = new URLSearchParams();
   if (safe(subject)) params.set('subject', safe(subject));
   if (safe(body)) params.set('body', safe(body));
-  return `mailto:${safe(to)}${params.size ? '?' + params.toString() : ''}`;
+  return `mailto:${recipient}${params.size ? '?' + params.toString() : ''}`;
 }
 
 export function crc16Ccitt(value) {
