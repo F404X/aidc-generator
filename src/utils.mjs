@@ -33,7 +33,7 @@ export function debounce(fn, ms = 170) {
     clearTimeout(timer);
     timer = setTimeout(() => { timer = undefined; fn(...args); }, ms);
   };
-  wrapped.cancel = () => clearTimeout(timer);
+  wrapped.cancel = () => { clearTimeout(timer); timer = undefined; };
   return wrapped;
 }
 /** Trailing-edge debounce with a guaranteed interval during continuous typing.
