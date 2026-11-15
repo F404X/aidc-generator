@@ -11,7 +11,11 @@ export const RMQR_VERSIONS = Object.freeze([
   return area(a)-area(b);
 }));
 export const REQUIRED_OPTIONS=Object.freeze({
-  rectangularmicroqrcode:Object.freeze({eclevel:'M'})
+  rectangularmicroqrcode:Object.freeze({eclevel:'M'}),
+  // D3 AQR has no default category; these values match the BWIPP example.
+  d3aqr:Object.freeze({category:2842,hostratio:2}),
+  // Royal Mail Mailmark requires an explicit Data Matrix type.
+  mailmark:Object.freeze({type:29})
 });
 const INVALID_OPTION = /invalid|unknown|unsupported|not available|not implemented|unrecognized/i;
 const CAPACITY_ERROR = /data|size|capacity|length|value/i;
