@@ -10,8 +10,8 @@ export function contrastRatio(a, b) {
       .map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
     return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
   };
-  const [x,y] = [luminance(a),luminance(b)].sort((p,q)=>q-p);
-  return (x+0.05)/(y+0.05);
+  const foreground = luminance(a), background = luminance(b);
+  return (Math.max(foreground,background)+0.05)/(Math.min(foreground,background)+0.05);
 }
 export function safeFilename(str) {
   return String(str ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60) || 'aidc-code';
