@@ -1,5 +1,5 @@
 /** Encode the *same examples* used by the lazy catalog thumbnails with the real bwip-js engine. */
-import {writeFile,appendFile} from 'node:fs/promises';
+import {writeFile,appendFile,readFile} from 'node:fs/promises';
 import bwipjs from 'bwip-js';
 import {FORMATS} from '../src/catalog.mjs';
 import {thumbnailSamples} from '../src/thumbnails.mjs';
@@ -36,7 +36,8 @@ for(const format of FORMATS){
   results.push({id:format.id,...(success||{status:'FAIL',candidates:candidates.length,detail:lastError})});
 }
 const summary=Object.fromEntries(['PASS','FAIL'].map(status=>[status,results.filter(r=>r.status===status).length]));
-const report={version:'1.5.1',engine:'bwip-js@4.11.4',total:FORMATS.length,summary,results};
+const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
+const report={version,engine:'bwip-js@4.11.4',total:FORMATS.length,summary,results};
 await writeFile('catalog-audit-report.json',JSON.stringify(report,null,2));
 for(const result of results)console.log(result.status.padEnd(5),result.id.padEnd(35),result.status==='PASS'?JSON.stringify(result.sample).slice(0,90):result.detail);
 console.log('TOTAL',FORMATS.length,JSON.stringify(summary));
