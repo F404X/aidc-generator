@@ -13,13 +13,15 @@ export const RMQR_VERSIONS = Object.freeze([
 export const REQUIRED_OPTIONS=Object.freeze({
   rectangularmicroqrcode:Object.freeze({eclevel:'M'})
 });
+const INVALID_OPTION = /invalid|unknown|unsupported|not available|not implemented|unrecognized/i;
+const CAPACITY_ERROR = /data|size|capacity|length|value/i;
 export function encodeRmqr(toSVG, baseOptions) {
   let lastCapacityError;
   for(const version of RMQR_VERSIONS){
     try{return toSVG({...baseOptions,version,eclevel:'M'});}
     catch(error){
       const message=String(error?.message||error);
-      if(/invalid|unknown|unsupported|not available|not implemented|unrecognized/i.test(message) && !/data|size|capacity|length|value/i.test(message))throw error;
+      if(INVALID_OPTION.test(message) && !CAPACITY_ERROR.test(message))throw error;
       lastCapacityError=error;
     }
   }
