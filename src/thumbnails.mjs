@@ -19,6 +19,13 @@ let observer;
 // For structured standards a fake bitmap would be misleading, so we only show
 // a generated symbol when one of these specimens actually encodes successfully.
 const SPECIAL = {
+  // Reference examples from BWIPP: these formats require more than generic text.
+  d3aqr: ['HTTPS://ID.GS1.ORG/01/09521234543213/22/ABC%2D123?99=XYZ-987'],
+  ean14: ['0952876543210'],
+  sscc18: ['09528765432101234'],
+  isbn: ['978-1-873671-00-9'],
+  ismn: ['979-0-2600-0043-8'],
+  mands: ['06421182'],
   aztecrune: ['42','128','255'],
   maxicode: [
     '1234567890',
@@ -30,9 +37,9 @@ const SPECIAL = {
     'SPC\n0200\n1\nCH4431999123000889012\nS\nSAMPLE AG\nMain Street 1\n8000\nZURICH\nCH\n\n\n\n\n\n\n25.00\nCHF\nS\nDEMO USER\nMain Street 1\n8000\nZURICH\nCH\nNON\n\nEPD',
   ],
   mailmark: [
+    'JGB 012100123412345678AB19XY1A 0             www.xyz.com',
     'JGB 012100123412345678XY1A 0',
     'JGB 012100123412345678XY1A0',
-    '123456789012345678901234',
   ],
   auspost: ['5956439111ABA 9','5956439111','12345678','5956439111'],
   onecode: ['01234567094987654321','0123456709498765432101234'],
@@ -40,6 +47,7 @@ const SPECIAL = {
   japanpost: ['1234567-890','1234567-890-ABC'],
   daft: ['FTAD','DTAF'],
   gs1northamericancoupon: [
+    '(8110)106141416543213500110000310123196000',
     '(8110)10614141123456(3900)001000',
     '(8110)10614141123456',
     '(8110)01009988776655',
@@ -53,11 +61,11 @@ const SPECIAL = {
   ean8composite: ['96385074|(10)ABC'],
   upcacomposite: ['012345678905|(10)ABC'],
   upcecomposite: ['01234565|(10)ABC'],
-  databaromnicomposite: ['09506000134352|(10)ABC'],
-  databartruncatedcomposite: ['09506000134352|(10)ABC'],
-  databarstackedcomposite: ['09506000134352|(10)ABC'],
-  databarstackedomnicomposite: ['09506000134352|(10)ABC'],
-  databarlimitedcomposite: ['09506000134352|(10)ABC'],
+  databaromnicomposite: ['(01)03612345678904|(11)990102'],
+  databartruncatedcomposite: ['(01)03612345678904|(11)990102'],
+  databarstackedcomposite: ['(01)03412345678900|(17)010200'],
+  databarstackedomnicomposite: ['(01)03612345678904|(11)990102'],
+  databarlimitedcomposite: ['(01)03512345678907|(21)abcdefghijklmnopqrstuv'],
   databarexpandedcomposite: ['(01)09506000134352|(10)ABC'],
   databarexpandedstackedcomposite: ['(01)09506000134352|(10)ABC'],
   gs1datamatrix: ['(01)09506000134352','(01)09506000134352(17)271231'],
