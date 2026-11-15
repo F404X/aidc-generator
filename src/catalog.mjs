@@ -149,7 +149,7 @@ export const FORMATS = [
     "name": "D3 AQR (beta)",
     "category": "2d",
     "kind": "matrix",
-    "example": "HELLO2026",
+    "example": "HTTPS://ID.GS1.ORG/01/09521234543213/22/ABC%2D123?99=XYZ-987",
     "hint": "Experimental D3 AQR format. Use standards-compliant data."
   },
   {
@@ -429,7 +429,7 @@ export const FORMATS = [
     "name": "EAN-14",
     "category": "retail",
     "kind": "linear",
-    "example": "12345678901231",
+    "example": "0952876543210",
     "hint": "Enter 13 digits to auto-calculate the check digit, or a valid 14-digit GTIN."
   },
   {
@@ -477,7 +477,7 @@ export const FORMATS = [
     "name": "ISBN",
     "category": "retail",
     "kind": "linear",
-    "example": "9780306406157",
+    "example": "978-1-873671-00-9",
     "hint": "Valid ISBN-10 or ISBN-13; separators may be accepted."
   },
   {
@@ -485,7 +485,7 @@ export const FORMATS = [
     "name": "ISMN",
     "category": "retail",
     "kind": "linear",
-    "example": "9790230671187",
+    "example": "979-0-2600-0043-8",
     "hint": "Valid ISMN identifier."
   },
   {
@@ -501,7 +501,7 @@ export const FORMATS = [
     "name": "Marks & Spencer",
     "category": "retail",
     "kind": "linear",
-    "example": "123456",
+    "example": "06421182",
     "hint": "Retail barcode with format-specific numeric identifiers and check digits."
   },
   {
@@ -517,7 +517,7 @@ export const FORMATS = [
     "name": "SSCC-18",
     "category": "gs1",
     "kind": "linear",
-    "example": "123456789012345675",
+    "example": "09528765432101234",
     "hint": "Enter 17 digits to calculate the check digit, or a valid 18-digit SSCC."
   },
   {
@@ -661,7 +661,7 @@ export const FORMATS = [
     "name": "GS1 DataBar Omni Composite",
     "category": "gs1",
     "kind": "stacked",
-    "example": "09506000134352|(10)ABC",
+    "example": "(01)03612345678904|(11)990102",
     "hint": "Composite barcode with linear and 2D components; requires standard-specific structured data."
   },
   {
@@ -669,7 +669,7 @@ export const FORMATS = [
     "name": "GS1 DataBar Truncated Composite",
     "category": "gs1",
     "kind": "stacked",
-    "example": "09506000134352|(10)ABC",
+    "example": "(01)03612345678904|(11)990102",
     "hint": "Composite barcode with linear and 2D components; requires standard-specific structured data."
   },
   {
@@ -677,7 +677,7 @@ export const FORMATS = [
     "name": "GS1 DataBar Stacked Composite",
     "category": "gs1",
     "kind": "stacked",
-    "example": "09506000134352|(10)ABC",
+    "example": "(01)03412345678900|(17)010200",
     "hint": "Composite barcode with linear and 2D components; requires standard-specific structured data."
   },
   {
@@ -685,7 +685,7 @@ export const FORMATS = [
     "name": "GS1 DataBar Stacked Omni Composite",
     "category": "gs1",
     "kind": "stacked",
-    "example": "09506000134352|(10)ABC",
+    "example": "(01)03612345678904|(11)990102",
     "hint": "Composite barcode with linear and 2D components; requires standard-specific structured data."
   },
   {
@@ -693,7 +693,7 @@ export const FORMATS = [
     "name": "GS1 DataBar Limited Composite",
     "category": "gs1",
     "kind": "stacked",
-    "example": "09506000134352|(10)ABC",
+    "example": "(01)15012345678907|(99)1234567",
     "hint": "Composite barcode with linear and 2D components; requires standard-specific structured data."
   },
   {
@@ -717,7 +717,7 @@ export const FORMATS = [
     "name": "GS1 North American Coupon",
     "category": "gs1",
     "kind": "stacked",
-    "example": "GS1 coupon data with valid AIs",
+    "example": "(8110)106141416543213500110000310123196000",
     "hint": "GS1 barcode; supply standards-compliant data with Application Identifiers where required."
   },
   {
@@ -757,7 +757,7 @@ export const FORMATS = [
     "name": "Royal Mail Mailmark",
     "category": "postal",
     "kind": "postal",
-    "example": "Structured Mailmark record",
+    "example": "JGB 012100123412345678AB19XY1A 0             www.xyz.com",
     "hint": "Royal Mail Mailmark requires a fully structured record."
   },
   {
