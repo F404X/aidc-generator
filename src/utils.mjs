@@ -29,7 +29,10 @@ export function triggerDownload(blob, name) {
 export const nextFrame = () => new Promise(resolve => requestAnimationFrame(resolve));
 export function debounce(fn, ms = 170) {
   let timer;
-  const wrapped = (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+  const wrapped = (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => { timer = undefined; fn(...args); }, ms);
+  };
   wrapped.cancel = () => clearTimeout(timer);
   return wrapped;
 }
