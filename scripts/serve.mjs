@@ -19,6 +19,6 @@ createServer(async (req,res) => {
     if (!(await stat(path)).isFile()) { res.writeHead(404).end('Not found'); return; }
     const body = await readFile(path);
     res.writeHead(200, { 'Content-Type':mime[extname(path)] || 'application/octet-stream', 'Cache-Control':'no-cache', 'X-Content-Type-Options':'nosniff' });
-    res.end(body);
+    res.end(req.method === 'HEAD' ? undefined : body);
   } catch { res.writeHead(404).end('Not found'); }
 }).listen(port, () => console.log(`AIDC Studio: http://localhost:${port}`));
