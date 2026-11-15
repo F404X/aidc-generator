@@ -18,3 +18,18 @@ test('structured formats have dedicated fixtures rather than placeholders',()=>{
     assert.doesNotMatch(examples[0],/^(Structured |Swiss payment|GS1 coupon data|BWIPP raw patterns)/i,id);
   }
 });
+
+test('formerly failing formats show their standards-compliant audit examples',()=>{
+  const ids=[
+    'd3aqr','ean14','isbn','ismn','mands','sscc18',
+    'databaromnicomposite','databartruncatedcomposite',
+    'databarstackedcomposite','databarstackedomnicomposite',
+    'databarlimitedcomposite','gs1northamericancoupon','mailmark',
+  ];
+  for(const id of ids){
+    const format=lookupFormat(id);
+    const examples=thumbnailSamples(format);
+    assert.equal(examples[0],format.example,id);
+    assert.ok(format.example.length>6,id);
+  }
+});
