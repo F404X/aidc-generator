@@ -44,7 +44,9 @@ export function debounceWithMaxWait(fn,delay=55,maxWait=170){
   const fire=()=>{
     if(timer!==null)clearTimeout(timer);
     timer=null;firstCall=null;
-    return fn(...args);
+    const pendingArgs=args;
+    args=[];
+    return fn(...pendingArgs);
   };
   const scheduled=(...nextArgs)=>{
     args=nextArgs;
