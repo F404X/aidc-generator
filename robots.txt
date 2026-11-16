@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://aidc-generator.pages.dev/sitemap.xml
+Sitemap: https://aidc.f404x.net/sitemap.xml
